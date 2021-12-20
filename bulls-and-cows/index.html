@@ -1,0 +1,62 @@
+<head>
+  </head>
+  <body>
+      
+<script type="module">
+    import { gen_nums, judge_str, seq_candidate_list, seq_auto_guess, default as init } from './bulls_and_cows.js';
+    window.random = Math.random;
+
+    async function run() {
+      await init('./bulls_and_cows_bg.wasm');
+
+      window.gen_nums = gen_nums;
+      window.judge_str = judge_str;
+      window.seq_candidate_list = seq_candidate_list;
+      window.seq_auto_guess = seq_auto_guess;
+      new_game();
+    }
+    run();
+</script>
+<script>
+    var nums = null;
+    var hist = [];
+    function new_game() {
+      nums = gen_nums();
+      const output = document.getElementById("output");
+      output.innerHTML = "";
+      hist = [];
+      const input = document.getElementById("input");
+      input.value = "0123";
+    }
+    function user_guess() {
+      const input = document.getElementById("input");
+      const val = input.value;
+      input.value = "";
+      const res = judge_str(nums, val);
+      hist.push(val + res[0] + res[1]);
+      const output = document.getElementById("output");
+      const candidate_list = seq_candidate_list(hist);
+      const msg = res[0] == 4 ? "Success!" : "remain candidates: <span title=\"" + candidate_list.slice(0,10) + "\">" + candidate_list.length + "</span>";
+      output.innerHTML += "round " + hist.length + ": " + val + " " + res[0] + "A" + res[1] + "B, " + msg + "<br>";
+    }
+    function auto_guess() {
+      const algo = document.getElementById("algo");
+      const input = document.getElementById("input");
+      input.value = seq_auto_guess(hist, algo.value);
+    }
+</script>
+<div>
+  猜数字: https://leetcode-cn.com/problems/bulls-and-cows/ <br>
+  https://en.wikipedia.org/wiki/Bulls_and_Cows<br><br>
+  Guess the 4 distict number:
+</div><br>
+<button onclick="new_game()">new game</button><br><br>
+<input type="text" id="input"> <button onclick="user_guess()">submit</button> 
+<button onclick="auto_guess()">auto</button> <select id="algo">
+  <option value="min-largest-group-size">min-largest-group-size</option>
+  <option value="max-group-expect-size">max-group-expect-size</option>
+  <option value="max-group-entropy" selected>max-group-entropy</option>
+</select><br><br>
+<div id="output">
+</div>
+</body>
