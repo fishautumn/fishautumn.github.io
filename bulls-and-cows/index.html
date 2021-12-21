@@ -30,14 +30,31 @@
     }
     function user_guess() {
       const input = document.getElementById("input");
-      const val = input.value;
-      input.value = "";
-      const res = judge_str(nums, val);
+      var val = input.value;
+      var res = null;
+      var fb = false;
+      if (val.length == 4) {
+        input.value = "";
+        res = judge_str(nums, val);
+      } else if (val.length == 9 && (val[6] == 'A' || val[6] == 'a') && (val[8] == 'B' || val[8] == 'b')) {
+        res = new Uint8Array(2);
+        res[0] = val[5];
+        res[1] = val[7];
+        val = val.substring(0, 4);
+        fb = true;
+      } else {
+        input.value = "";
+        alert("input guess '0123' or guess with feedback '0123 1A1B'");
+        return;
+      }
       hist.push(val + res[0] + res[1]);
       const output = document.getElementById("output");
       const candidate_list = seq_candidate_list(hist);
       const msg = res[0] == 4 ? "Success!" : "remain candidates: <span title=\"" + candidate_list.slice(0,10) + "\">" + candidate_list.length + "</span>";
       output.innerHTML += "round " + hist.length + ": " + val + " " + res[0] + "A" + res[1] + "B, " + msg + "<br>";
+      if (fb) {
+        auto_guess();
+      }
     }
     function auto_guess() {
       const algo = document.getElementById("algo");
@@ -51,12 +68,11 @@
   Guess the 4 distict number:
 </div><br>
 <button onclick="new_game()">new game</button><br><br>
-<input type="text" id="input"> <button onclick="user_guess()">submit</button> 
+<input type="text" id="input" placeholder="`????` or `???? ?A?B`"> <button onclick="user_guess()">submit</button> 
 <button onclick="auto_guess()">auto</button> <select id="algo">
-  <option value="min-largest-group-size">min-largest-group-size</option>
-  <option value="max-group-expect-size">max-group-expect-size</option>
+  <option value="min-largest-group-size">min-largest-group-size (Knuth, 1977)</option>
+  <option value="max-group-expect-size">max-group-expect-size (Irving, 1978)</option>
   <option value="max-group-entropy" selected>max-group-entropy</option>
 </select><br><br>
-<div id="output">
-</div>
+<div id="output"/>
 </body>
