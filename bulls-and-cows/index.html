@@ -1,8 +1,5 @@
-<head>
-  </head>
-  <body>
-      
-<script type="module">
+<body>
+  <script type="module">
     import { gen_nums, judge_str, seq_candidate_list, seq_auto_guess, default as init } from './bulls_and_cows.js';
     window.random = Math.random;
 
@@ -16,8 +13,8 @@
       new_game();
     }
     run();
-</script>
-<script>
+  </script>
+  <script>
     var nums = null;
     var hist = [];
     function new_game() {
@@ -50,7 +47,7 @@
       hist.push(val + res[0] + res[1]);
       const output = document.getElementById("output");
       const candidate_list = seq_candidate_list(hist);
-      const msg = res[0] == 4 ? "Success!" : "remain candidates: <span title=\"" + candidate_list.slice(0,10) + "\">" + candidate_list.length + "</span>";
+      const msg = res[0] == 4 ? "Success!" : "remain candidates: <span title=\"" + candidate_list.slice(0, 10) + "\">" + candidate_list.length + "</span>";
       output.innerHTML += "round " + hist.length + ": " + val + " " + res[0] + "A" + res[1] + "B, " + msg + "<br>";
       if (fb) {
         auto_guess();
@@ -61,18 +58,49 @@
       const input = document.getElementById("input");
       input.value = seq_auto_guess(hist, algo.value);
     }
-</script>
-<div>
-  猜数字: https://leetcode-cn.com/problems/bulls-and-cows/ <br>
-  https://en.wikipedia.org/wiki/Bulls_and_Cows<br><br>
-  Guess the 4 distict number:
-</div><br>
-<button onclick="new_game()">new game</button><br><br>
-<input type="text" id="input" placeholder="`????` or `???? ?A?B`"> <button onclick="user_guess()">submit</button> 
-<button onclick="auto_guess()">auto</button> <select id="algo">
-  <option value="min-largest-group-size">min-largest-group-size (Knuth, 1977)</option>
-  <option value="max-group-expect-size">max-group-expect-size (Irving, 1978)</option>
-  <option value="max-group-entropy" selected>max-group-entropy</option>
-</select><br><br>
-<div id="output"/>
+  </script>
+  <div>
+    猜数字: https://leetcode-cn.com/problems/bulls-and-cows/ <br>
+    https://en.wikipedia.org/wiki/Bulls_and_Cows<br><br>
+    Guess the 4 distict number:
+  </div><br>
+  <button onclick="new_game()">new game</button><br><br>
+  <input type="text" id="input" placeholder="`????` or `???? ?A?B`"> <button onclick="user_guess()">submit</button>
+  <button onclick="auto_guess()">hint</button> <select id="algo">
+    <option value="min-largest-group-size">min-largest-group-size (Knuth, 1977)</option>
+    <option value="min-group-expect-size">min-group-expect-size (Irving, 1978)</option>
+    <option value="max-group-entropy" selected>max-group-entropy</option>
+  </select><br><br>
+  <div id="output"></div>
+  <br>
+  <hr>
+  <div>
+    Basic usage:
+    <ul>
+      <li>Enter your guess (4 distinct digits) in the textbox</li>
+      <li>Click <button disabled>submit</button>
+        <ul>
+          <li>It will show correct position and number (?A?B) </li>
+          <li>It also shows remain possible candidates count</li>
+          <li>If your hover cursor over the candidate count value, it shows the first 10 candidate values</li>
+        </ul>
+      <li>Click the <button disabled>new game</button> if your want start a new game</li>
+      <li>Click the <button disabled>hint</button> will output a guess with one of the algorithm:
+        <ul>
+          <li>min-largest-group-size (Knuth, 1977)</li>
+          <li>min-group-expect-size (Irving, 1978)</li>
+          <li>max-group-entropy</li>
+        </ul>
+      </li>
+    </ul>
+    <br>
+    Test the algorithm:
+    <ol>
+      <li>Choose 4 distinct digits. For example `2468`</li>
+      <li>Click <button disabled>hint</button>, it will display a result in the textbox. Let's say it's `0123`</li>
+      <li>Feedback correct positions and numbers in the textbox: `0123 0A1B`</li>
+      <li>Click <button disabled>submit</button></li>
+      <li>The algorithm may supply a new guess: `1456`, goto step 3.</li>
+    </ol>
+  </div>
 </body>
