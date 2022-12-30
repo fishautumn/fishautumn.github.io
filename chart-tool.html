@@ -59,6 +59,7 @@ function render() {
     options: {
       parsing: {
         xAxisKey: xkey,
+        key: xkey,
         yAxisKey: ykey
       }
     }
@@ -79,7 +80,10 @@ function render() {
 <select id="chart-type">
     <option>line</option>
     <option>bar</option>
+    <option>pie</option>
     <option>scatter</option>
+    <option>doughnut</option>
+    <option>polarArea</option>
 </select>
 <label>X: </label><select id="xkey">
 </select>
