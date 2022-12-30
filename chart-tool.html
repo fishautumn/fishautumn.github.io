@@ -4,17 +4,18 @@
 <script>
 function parseData() {
   const txt = document.getElementById('myData').value;
-  const lines = txt.split(/[\r\n]/);
+  const splitter = new RegExp(document.getElementById('splitterEdit').value);
+  const lines = txt.split(/[\r\n]+/);
   if (lines.length == 0) {
     return null;
   }
   const init = lines[0].replace(/^# */, "").trim();
-  const keys = init.split(/[,\s]+/);
+  const keys = init.split(splitter);
   var data = [];
   for (var i = 1; i < lines.length; ++i) {
     const line = lines[i].replace(/^# */, "").trim();
     if (line.length > 0) {
-      const cols = line.split(/[,\s]+/);
+      const cols = line.split(splitter);
       var obj = {'row#':i.toString()};
       data.push(obj);
       for (var j = 0; j< cols.length; ++j) {
@@ -26,12 +27,13 @@ function parseData() {
 }
 function loadKeys() {
   const txt = document.getElementById('myData').value;
-  const lines = txt.split(/[\r\n]/);
+  const splitter = new RegExp(document.getElementById('splitterEdit').value);
+  const lines = txt.split(/[\r\n]+/);
   if (lines.length == 0) {
     return null;
   }
   const init = lines[0].replace(/^# */, '').trim();
-  const keys = init.split(/[,\s]+/);
+  const keys = init.split(splitter);
   const xkeySel = document.getElementById('xkey');
   const ykeySel = document.getElementById('ykey');
   xkeySel.innerHTML = '<option>row#</option>';
@@ -46,6 +48,8 @@ function loadKeys() {
 var chart = null;
 
 function render() {
+  const container = document.getElementById('container');
+  container.style = 'width:' + document.getElementById('widthEdit').value + 'px;height:' + document.getElementById('heightEdit').value + 'px';
   const ctx = document.getElementById('myChart');
   const type = document.getElementById('chart-type').value;
   const data = parseData();
@@ -54,6 +58,7 @@ function render() {
   const cfg = {
     type: type,
     data: {
+      labels: data.map(o => o[xkey]),
       datasets: [{data: data}]
     },
     options: {
@@ -73,9 +78,14 @@ function render() {
 </script>
 </head>
 <body>
-<label>csv/tsv content:</label><br/>
+<label>Data (csv/tsv):</label><br/>
 <textarea id="myData" cols="80" rows="20" onchange="loadKeys()">
-</textarea><br/>
+</textarea><br/><br/>
+
+<label>column splitter: </label><input type="text" id="splitterEdit" value="[\s,]+"/><br/><br/>
+
+canvas <label>width: </label><input type="text" id="widthEdit" value="800" size="5"/><label>px</label>;
+<label>height: </label><input type="text" id="heightEdit" value="400" size="5"/><label>px</label><br/><br/>
 <label>chart type: </label>
 <select id="chart-type">
     <option>line</option>
@@ -83,14 +93,13 @@ function render() {
     <option>pie</option>
     <option>scatter</option>
     <option>doughnut</option>
+    <option>radar</option>
     <option>polarArea</option>
-</select>
-<label>X: </label><select id="xkey">
-</select>
-<label>Y: </label><select id="ykey">
-</select>
+</select>;
+<label>X Axis: </label><select id="xkey"></select>;
+<label>Y Axis: </label><select id="ykey"></select>
 <button onclick="render()">render</button>
-<div>
+<div id="container" style="width:800px; height:800px">
     <canvas id="myChart"></canvas>
 </div>
 </body>
