@@ -1,0 +1,1650 @@
+
+
+
+
+
+
+
+
+
+        The Evolution of the _K_e_r_b_e_r_o_s Authentication
+                          Service
+
+
+                        John T. Kohl
+
+               Digital Equipment Corporation
+
+
+                     B. Clifford Neuman
+
+               Information Sciences Institute
+             University of Southern California
+
+
+                      Theodore Y. Ts'o
+
+           Massachusetts Institute of Technology
+
+
+                          _A_B_S_T_R_A_C_T
+
+          The    Kerberos    Authentication    Service,
+     developed at MIT, has been widely adopted by other
+     organizations to identify clients of network  ser-
+     vices  across  an  insecure network and to protect
+     the privacy and integrity  of  communication  with
+     those  services.   While  Version  4 was a step up
+     from traditional security  in  networked  systems,
+     extensions were needed to allow its wider applica-
+     tion in environments with  different  characteris-
+     tics  than that at MIT.  This paper discusses some
+     of the limitations of Version 4  of  Kerberos  and
+     presents the solutions provided by Version 5.
+
+
+
+_1.  _I_n_t_r_o_d_u_c_t_i_o_n
+
+The Kerberos Authentication Service  was  developed  by  the
+Massachusetts  Institute  of Technology (MIT) to protect the
+__________________________
+This  paper  is  a revision of a paper presented at the
+Spring 1991 EurOpen Conference, in Troms,  Norway,  and
+will  appear in an upcoming IEEE Computer Society Press
+book edited by Frances Brazier and Dag Johansen.
+
+The work described here was done while Kohl was at MIT,
+and in part while Neuman was at the University of Wash-
+ington.
+
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 2 -
+
+
+emerging network services provided by Project Athena.   Ver-
+sions  1  through 3 were used internally.  Although designed
+primarily for use by Project Athena, Version 4 of the proto-
+col  has  achieved  widespread  use  beyond MIT.  Models for
+administration and use of computer services differ from site
+to  site  and  some  environments require support that isn't
+present in Version 4.  Version 5 of  the  Kerberos  protocol
+incorporates  new features suggested by experience with Ver-
+sion 4, making it useful in more situations.  Version 5  was
+based  in  part  upon  input from many contributors familiar
+with Version 4.
+
+This paper begins by describing the Kerberos model and basic
+protocol  exchanges.  Section 3 discusses the limitations of
+Version 4 of  Kerberos.   The  fourth  section  reviews  new
+features found in Version 5.  Section 5 describes the imple-
+mentation of Version 5 and support for  converting  existing
+applications  from  Version  4.   The  paper  concludes with
+status and plans for future work.
+
+_T_e_r_m_i_n_o_l_o_g_y _a_n_d _c_o_n_v_e_n_t_i_o_n_s
+
+A _p_r_i_n_c_i_p_a_l is the basic entity that participates in authen-
+tication.  In most cases a principal represents a user or an
+instantiation of a network service  on  a  particular  host.
+Each  principal  is uniquely named by its _p_r_i_n_c_i_p_a_l _i_d_e_n_t_i_f_-
+_i_e_r.
+
+_E_n_c_r_y_p_t_i_o_n is the process of transforming data into  a  form
+that   cannot   be  understood  without  applying  a  second
+transformation.   The  transformation  is  affected  by   an
+_e_n_c_r_y_p_t_i_o_n  _k_e_y in such a manner that the second transforma-
+tion can only be applied by someone  in  possession  of  the
+corresponding _d_e_c_r_y_p_t_i_o_n _k_e_y.
+
+A _s_e_c_r_e_t-_k_e_y _c_r_y_p_t_o_s_y_s_t_e_m such as that defined by  the  Data
+Encryption  Standard  (DES)  [FIPS46]  uses a single key for
+both encryption and decryption.  Such an encryption  key  is
+called a _s_e_c_r_e_t key.
+
+A _p_u_b_l_i_c-_k_e_y _c_r_y_p_t_o_s_y_s_t_e_m such as RSA [Riv78] uses different
+keys  for encryption and decryption.  One of the keys in the
+pair can be publicly known while  the  other  must  be  kept
+private.   These  keys are referred to as _p_u_b_l_i_c and _p_r_i_v_a_t_e
+keys respectively.
+
+_P_l_a_i_n_t_e_x_t is a  message  in  its  unencrypted  form,  either
+before  the  encryption  transformation has been applied, or
+after the corresponding decryption  transformation  is  com-
+plete.   _C_i_p_h_e_r_t_e_x_t  is the encrypted form of a message, the
+output of the encryption transformation.
+
+In figures, encryption is denoted by showing  the  plaintext
+surrounded  by curly braces ({}) followed by a key (K) whose
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 3 -
+
+
+subscript denotes the principals who possess or have  access
+to  that  key.   Thus,  "abc"  encrypted  under  c's  key is
+represented as {abc}K9c8.
+
+
+_2.  _T_h_e _K_e_r_b_e_r_o_s Model
+
+Kerberos was developed to  enable  network  applications  to
+securely  identify their peers.  To achieve this, the client
+(initiating party) conducts a three-party  message  exchange
+to  prove  its identity to the server (the contacted party).
+The client proves its identity by presenting to the server a
+_t_i_c_k_e_t (shown in figures as T9c,s8) which identifies a princi-
+pal and establishes a temporary encryption key that  may  be
+used  to communicate with that principal, and an _a_u_t_h_e_n_t_i_c_a_-
+_t_o_r (shown in figures as A9c,s8) which proves that the  client
+is  in  possession  of the temporary encryption key that was
+assigned to the principal identified  by  the  ticket.   The
+authenticator  prevents  an intruder from replaying the same
+ticket to the server in a future session.
+
+Tickets are issued by a trusted third party _K_e_y _D_i_s_t_r_i_b_u_t_i_o_n
+_C_e_n_t_e_r  (KDC).  The  KDC,  proposed by Needham and Schroeder
+[Nee78], is trusted to hold in confidence secret keys  known
+by  each  client  and server on the network (the secret keys
+are established out-of-band or through  an  encrypted  chan-
+nel).   The  key  shared  with  the KDC forms the basis upon
+which a client or server believes the  authenticity  of  the
+tickets  it receives.  A Kerberos ticket is valid for a fin-
+ite interval called its _l_i_f_e_t_i_m_e.  When the  interval  ends,
+the  ticket  expires;  any  later  authentication  exchanges
+require a new ticket from the KDC.
+
+Each installation  comprises  an  autonomously  administered
+_r_e_a_l_m  and establishes its own KDC. Most currently-operating
+sites have chosen realm  names  that  parallel  their  names
+under the Internet domain name system (e.g. Project Athena's
+realm is ATHENA.MIT.EDU).  Clients in  separate  realms  can
+authenticate  to  each  other if the administrators of those
+realms have previously arranged a shared secret.
+
+_2._1.  _T_h_e _i_n_i_t_i_a_l _t_i_c_k_e_t _e_x_c_h_a_n_g_e
+
+Figure 1 shows the messages|- required for a client to  prove
+its  identity  to a server.  The basic messages are the same
+for Versions 4 and 5 of Kerberos though the details  of  the
+encoding  differ.   A typical application uses this exchange
+when  it  first  establishes  a  connection  to  a   server.
+__________________________
+|- For clarity, the figures show a simplified version of
+the  messages.  Other message fields present in the ac-
+tual messages are less relevant to the present  discus-
+sion.
+
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 4 -
+
+
+Subsequent connections to the same server require  only  the
+final message in the exchange (client caching eliminates the
+need for the first two messages until the ticket expires).
+linewid = 1.5i ellipsewid = .7i down KDC: ellipse "KDC" line
+<-  down 0.5i "1 " rjust move right 0.1i line <- up 0.5i " 2
+" ljust move down  0.5i  from  KDC.s  down  Client:  ellipse
+"Client"  right;  arrow  right  1i  from  Client.e "3" above
+Server: ellipse "Server"
+
+     1. Client -> KDC: c, s, n
+     2. KDC -> Client: {Kc,s ,n}Kc ,{Tc,s}Ks
+     3. Client -> Server: {Ac}Kc,s ,{Tc,s}Ks
+
+     (In version 4, message 2 is {Kc,s ,n,{Tc,s} Ks}Kc)
+
+       Figure 1: _G_e_t_t_i_n_g _a_n_d _u_s_i_n_g _a_n _I_n_i_t_i_a_l _T_i_c_k_e_t
+
+
+In the first message the client contacts the KDC, identifies
+itself, presents a nonce (a timestamp or other non-repeating
+identifier for the request), and  requests  credentials  for
+use with a particular server.
+
+Upon receipt of the message the KDC selects a random encryp-
+tion  key  K9c,s8,  called  the _s_e_s_s_i_o_n _k_e_y, and generates the
+requested ticket.  The ticket identifies the client,  speci-
+fies  the  session  key K9c,s8, lists the start and expiration
+times, and is encrypted in the key K9s8 shared by the KDC  and
+the  server.  Because the ticket is encrypted in a key known
+only by the KDC and the server, nobody else can read  it  or
+change  the identity of the client specified within it.  The
+KDC next assembles a response, the second message, which  it
+sends to the client.  The response includes the session key,
+the nonce, and the ticket. The session  key  and  nonce  are
+encrypted  with the client's secret key K9c8 (in Version 4 all
+fields are encrypted in K9c8).
+
+Upon receiving the response the client decrypts it using its
+secret  key (usually derived from a password).  After check-
+ing the nonce, the client caches the ticket  and  associated
+session key for future use.
+
+In the third message the client presents the  ticket  and  a
+freshly-generated  authenticator to the server.  The authen-
+ticator contains a timestamp and is encrypted in the session
+key K9c,s8.  Upon receipt the server decrypts the ticket using
+the key it shares with the KDC (this key is kept  in  secure
+storage  on  the server's host) and extracts the identity of
+the client and the session key K9c,s8.  To verify the identity
+of  the  client, the sever decrypts the authenticator (using
+the session key K9c,s8 from the ticket) and verifies that  the
+timestamp is current.
+
+Successful verification of the authenticator proves that the
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 5 -
+
+
+client  possesses  the session key K9c,s8, which it only could
+have obtained if it were able to decrypt the  response  from
+the  KDC.   Since the response from the KDC was encrypted in
+K9c8, the key of the user named in the ticket, the server  may
+reasonably be assured that identity of the client is in fact
+the principal named in the ticket.
+
+If  the  client  requests  mutual  authentication  from  the
+server,  the  server responds with a fresh message encrypted
+using the session key.  This proves to the client  that  the
+server  possesses  the session key, which it could only have
+obtained if it was able to decrypt the  ticket.   Since  the
+ticket  is  encrypted in a key known only by the KDC and the
+server, the response proves the identity of the server.
+
+For greater detail on the messages in Version 4 of  Kerberos
+the  reader  is  referred  to  [Ste88] and [Mil87].  Details
+about Version 5 can be found in  [Koh92].
+
+_2._2.  _T_h_e _a_d_d_i_t_i_o_n_a_l _t_i_c_k_e_t _e_x_c_h_a_n_g_e
+
+To reduce the risk of exposure of the client's secret key K9c
+8and  to  make  the  use  of Kerberos more transparent to the
+user, the exchange above  is  used  primarily  to  obtain  a
+ticket  for  a  special  _t_i_c_k_e_t-_g_r_a_n_t_i_n_g  _s_e_r_v_e_r  (TGS). The
+client erases its copy of the client's secret key once  this
+ticket-granting ticket (TGT) has been obtained,
+
+The TGS is logically distinct from the  KDC  which  provides
+the  initial  ticket  service,  but the TGS runs on the same
+host and has access to the same database of clients and keys
+used  by  the KDC (see Figure 2).  A client presents its TGT
+(along with other request data)  to  the  TGS  as  it  would
+present  it to any other server (in an application request);
+the TGS verifies the ticket, authenticator, and accompanying
+request,  and  replies  with a ticket for a new server.  The
+protected part of the reply is encrypted  with  the  session
+key from the TGT, so the client need not retain the original
+secret key K9c8 to decrypt and use  this  reply.   The  client
+then  uses  these  new credentials as before to authenticate
+itself to the server, and perhaps to verify the identity  of
+the server.
+
+Once the  authentication  is  established,  the  client  and
+server share a common session key K9c,s8, which has never been
+transmitted over the network without being encrypted.   They
+may use this key to protect subsequent messages from disclo-
+sure or modification.   Kerberos  provides  message  formats
+which  an  application  may generate as needed to assure the
+integrity or both the integrity and privacy of a message.
+
+
+
+
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 6 -
+
+
+linewid = 1.5i ellipsewid = .7i  right  KDC:  ellipse  "KDC"
+move right 1i TGS: ellipse "TGS" line <-> dotted from KDC.ne
+to TGS.nw "usually co-located "  above  move  down  1i  from
+KDC.w  right  Client: ellipse "Client" move right 1i Server:
+ellipse "Server" arrow from Client.nw to KDC.sw "1  "  rjust
+arrow  from  KDC.s  to  Client.n  "   2"  ljust  arrow  from
+Client.ne to TGS.w "3  " rjust arrow from TGS.sw to Client.e
+"  4" ljust arrow from Client.se to Server.sw "5" above
+
+  1. Client -> KDC: c, tgs, n
+  2. KDC -> Client: {Kc,tgs ,n}Kc ,{Tc,tgs}Ktgs
+  3. Client -> TGS: {Ac}Kc,tgs ,{Tc,tgs}Ktgs , s, n
+  4. TGS -> Client: {Kc,s,n}Kc,tgs ,{Tc,s}Ks
+  5. Client -> Server: {Ac}Kc,s ,{Tc,s}Ks
+
+  (In version 4, message 2 is {Kc,tgs ,n,{Tc,tgs}Ktgs}Kc,
+  and message 4 is {Kc,s ,n,{Tc,s}Ks}Kc,tgs)
+
+             Figure 2: _G_e_t_t_i_n_g _a _s_e_r_v_i_c_e _t_i_c_k_e_t
+
+_3.  _L_i_m_i_t_a_t_i_o_n_s _o_f _V_e_r_s_i_o_n _4
+
+Version 4 of Kerberos is in widespread use, but  some  sites
+require  functionality that it doesn't provide, while others
+have a computing environment  or  administrative  procedures
+that differ from that at MIT.  As a result, work on Kerberos
+Version 5 commenced in 1989, fueled by discussions with Ver-
+sion 4 users and administrators about their experiences with
+the protocol and MIT's implementation.
+
+_3._1.  _E_n_v_i_r_o_n_m_e_n_t_a_l _s_h_o_r_t_c_o_m_i_n_g_s
+
+Kerberos Version 4 was targeted primarily for Project Athena
+[Cha90],  and as such in some areas it makes assumptions and
+takes approaches that are not appropriate universally:
+
+Encryption system dependence: The Version  4  protocol  uses
+     only the Data Encryption Standard (DES) to encrypt mes-
+     sages.  The export of DES from the USA is restricted by
+     the  U.S.  Government,  making  truly widespread use of
+     Version 4 difficult.
+
+Internet protocol dependence: Version 4 requires the use  of
+     Internet   Protocol  (IP)  addresses,  which  makes  it
+     unsuitable for some environments.
+
+Message byte ordering: Version  4  uses  a  "receiver  makes
+     right"  philosophy  for  encoding  multi-byte values in
+     network messages, where the sending  host  encodes  the
+     value  in  its  own natural byte order and the receiver
+     must convert this byte order to its own  native  order.
+     While  this  makes communication between two hosts with
+     the same byte order simple, it does  not  follow  esta-
+     blished  conventions and will preclude interoperability
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 7 -
+
+
+     of a machine with an unusual byte order not  understood
+     by the receiver.
+
+Ticket lifetimes: The valid life of a ticket in Version 4 is
+     encoded  by  a  UNIX  timestamp issue date and an 8-bit
+     lifetime quantity in units of five  minutes,  resulting
+     in  a  maximum  lifetime of 211/4 hours.  Some environ-
+     ments require longer  lifetimes  for  proper  operation
+     (e.g.  a  long-running  simulation which requires valid
+     Kerberos credentials during its entire execution).
+
+Authentication forwarding: Version 4 has  no  provision  for
+     allowing  credentials issued to a client on one host to
+     be forwarded to some other host  and  used  by  another
+     client.   Support for this might be useful if an inter-
+     mediate server needs to access some resource  with  the
+     rights  of the client (e.g. a print server needs access
+     to the file server to  retrieve  a  client's  file  for
+     printing),  or  if a user logs into another host on the
+     network and wishes to pursue activities there with  the
+     privileges  and  authentication  available  on the ori-
+     ginating host.
+
+Principal naming: In Version 4, principals  are  named  with
+     three  components:  name,  instance, and realm, each of
+     which may be up to 39 characters long.  These sizes are
+     too   short  for  some  applications  and  installation
+     environments.   In  addition,  due  to  implementation-
+     imposed  conventions  the  normal character set allowed
+     for the name portion excludes the period (.), which  is
+     used in account names on some systems.  These same con-
+     ventions dictate that the account name match  the  name
+     portion of the principal identifier, which is unaccept-
+     able in situations where Kerberos is being installed in
+     an existing network with non-unique account names.
+
+Inter-realm authentication: Version 4  provides  cooperation
+     between  authentication realms by allowing each pair of
+     cooperating realms to exchange an encryption key to  be
+     used  as  a  secondary key for the ticket-granting ser-
+     vice.  A client can obtain tickets for services from  a
+     foreign  realm's  KDC  by  first  obtaining  a  ticket-
+     granting ticket for the foreign realm  from  its  local
+     KDC  and  then using that TGT to obtain tickets for the
+     foreign application server (see Figure 3).  This  pair-
+     wise key exchange makes inter-realm ticket requests and
+     verification easy to implement, but requires O(n829)  key
+     exchanges  to  interconnect  n  realms  (see Figure 4).
+     Even with only a few cooperating realms, the assignment
+     and  management of the inter-realm keys is an expansive
+     task.
+
+
+
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 8 -
+
+
+_3._2.  _T_e_c_h_n_i_c_a_l _d_e_f_i_c_i_e_n_c_i_e_s
+
+In addition to the environmental problems,  there  are  some
+technical  deficiencies in Version 4 and its implementation.
+Bellovin and Merritt  [Bel90] provide detailed  analyses  of
+some of these issues.
+
+Double Encryption: As shown in Figure 1, the  ticket  issued
+     by  the Kerberos server in Version 4 is encrypted twice
+     when transmitted to the client, and only once when sent
+     to the application server.  There is no need to encrypt
+     it in the message from the KDC to the client, and doing
+     so  can be wasteful of processing time if encryption is
+     computationally intensive (as will be the case for most
+     software-based  encryption implementations; see [Mer90]
+     for  discussion  of  fast   software-based   encryption
+     methods).
+
+PCBC encryption: Kerberos Version 4 uses a non-standard mode
+     of  DES  to  encrypt  its  messages.   FIPS 81 [FIPS81]
+     describes the normal cipher-block-chaining  (CBC)  mode
+     of  DES.   Version  4  uses  a  modified Version called
+     plain- and  cipher-block-chaining  mode  (PCBC).   This
+     mode  was  an  attempt  to  provide data encryption and
+     integrity protection in one operation.   Unfortunately,
+     it  allows  an intruder to modify a message with a spe-
+     cial block-exchange attack which may not be detected by
+     the recipient [Koh89].
+linewid  =  1.5i  ellipsewid  =  .9i  right   KDC:   ellipse
+"TGSlocal"  move right 1i TGS: ellipse "TGSremote" move down
+1i from KDC.w right Client: ellipse "Client" move  right  1i
+Server:  ellipse  "Serverremote"  arrow  from  Client.nw  to
+KDC.sw  "1  " rjust arrow from KDC.s to Client.n "  2" ljust
+arrow  from Client.ne to TGS.w "3  " rjust arrow from TGS.sw
+to Client.e "  4" ljust arrow from  Client.se  to  Server.sw
+"5" above ellipsewid = .7i
+
+          1. Client -> TGSlocal: {Ac}Kc,tgs ,{Tc,tgs}Ktgs , tgsrem
+          2. TGSlocal -> Client: {Kc,tgsrem}Kc,tgs ,{Tc,tgsrem}Ktgsrem
+          3. Client -> TGSremote: {Ac}Kc,tgsrem ,{Tc,tgsrem}Ktgsrem, srem
+          4. TGSremote -> Client: {Kc,srem}Kc,tgsrem ,{Tc,srem}Ksrem
+          5. Client -> Serverremote:  {Ac}Kc,srem ,{Tc,srem}Ksrem
+
+          (In version 4, message 2 is {Kc,tgsrem ,{Tc,tgsrem}Ktgsrem}Kc,tgs,
+          and message 4 is {Kc,srem ,{Tc,srem}Ksrem}Kc,tgsrem)
+
+        Figure 3: _G_e_t_t_i_n_g _a _f_o_r_e_i_g_n _r_e_a_l_m _s_e_r_v_i_c_e _t_i_c_k_e_t
+
+linewid = 1.5i boxht = .3i boxwid = 1i  EDU:  box  "EDU"  at
+-.1,0 MITEDU: box "MIT.EDU" at 1.6,1 boxwid = 1.2i BERK: box
+"Berkeley.EDU" at 1.4,0  UMICH:  box  "UMICH.EDU"  at  -.3,1
+boxwid  =  1.5i IFSUMICH: box "IFS.UMICH.EDU" at .8,1.6 line
+<-> from EDU.ne to BERK.nw line <-> from 1/4 <EDU.ne, EDU.n>
+to  MITEDU.sw  line  <->  from  1/2  <EDU.ne,  EDU.n> to 4/5
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 9 -
+
+
+<IFSUMICH.sw, IFSUMICH.s> line <-> from EDU.n to UMICH.s
+
+line <-> from BERK.n to MITEDU.s line <-> from 1/2 <BERK.nw,
+BERK.n> to IFSUMICH.s line <-> from 1/4 <BERK.nw, BERK.n> to
+UMICH.se
+
+line <-> from MITEDU.n to IFSUMICH.se line <-> from MITEDU.w
+to UMICH.e
+
+line <-> from IFSUMICH.sw to UMICH.n
+
+           Figure 4: _V_e_r_s_i_o_n _4 _r_e_a_l_m _i_n_t_e_r_c_o_n_n_e_c_t_i_o_n_s
+
+
+Authenticators and replay detection: Kerberos Version 4 uses
+     an  encrypted timestamp to verify the freshness of mes-
+     sages and prevent an intruder from staging a successful
+     replay attack.  If an authenticator (which contains the
+     timestamp) is out of date or  is  being  replayed,  the
+     application  server  rejects  the authentication.  How-
+     ever, maintaining a list  of  unexpired  authenticators
+     which  have  already been presented to a service can be
+     hard to implement properly (and indeed  is  not  imple-
+     mented  in  the Version 4 implementation distributed by
+     MIT).
+
+Password attacks: The initial  exchange  with  the  Kerberos
+     server  encrypts  the  response  with a client's secret
+     key, which in the case of  a  user  is  algorithmically
+     derived from a password.  An intruder is able to record
+     an exchange of this sort and, without alerting any sys-
+     tem  administrators,  attempt  to  discover  the user's
+     password by decrypting the response with each  password
+     guess.   Since  the  response  from the Kerberos server
+     includes verifiable plaintext [Lom89], the intruder can
+     try  as  many  passwords as are available and will know
+     when the proper password has been found (the  decrypted
+     response will make sense).
+
+Session keys: Each ticket issued by the KDC contains  a  key
+     specific  to  that  ticket, called a session key, which
+     may be used by the client and server to  protect  their
+     communications   once  authentication  has  been  esta-
+     blished.  However, since many clients use a ticket mul-
+     tiple times during a user's session, it may be possible
+     for an intruder to replay messages from a previous con-
+     nection  to  clients  or  servers which do not properly
+     protect themselves (again, MIT's Version 4  implementa-
+     tion  does  not fully implement this protection for the
+     KRB_SAFE and KRB_PRIV messages).   Additionally,  there
+     are situations in which a client wishes to share a ses-
+     sion key with several servers.  This  requires  special
+     non-standard application negotiations in Version 4.
+
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 10 -
+
+
+Cryptographic checksum: The  cryptographic  checksum  (some-
+     times  called  a message authentication code or hash or
+     digest function) used in Version 4 is based on the qua-
+     dratic  algorithm described in [Jue85].  The MIT imple-
+     mentation does not perform this function as  described;
+     the  suitability  of  the modified version as a crypto-
+     graphic checksum function is unknown.
+
+_4.  _C_h_a_n_g_e_s _f_o_r _V_e_r_s_i_o_n _5
+
+Version 5 of the protocol has  evolved  over  the  past  two
+years  based  on  implementation  experience and discussions
+within the community of Kerberos users.  Its final  specifi-
+cation  has reached closure, and a description of the proto-
+col is available [Koh92].  Version 5 addresses the  concerns
+described above and provides additional functionality.
+
+_4._1.  _C_h_a_n_g_e_s _b_e_t_w_e_e_n _V_e_r_s_i_o_n_s _4 _a_n_d _5
+
+_U_s_e _o_f _e_n_c_r_y_p_t_i_o_n
+
+To improve modularity and ease export-regulation  considera-
+tions  for  Version  5,  the  use  of  encryption  has  been
+separated  into  distinct  software  modules  which  can  be
+replaced  or  removed  by  the  programmer  as needed.  When
+encryption is used in a protocol message, the ciphertext  is
+tagged  with  a  type  identifier  so that the recipient can
+identify the appropriate decryption algorithm  necessary  to
+interpret the message.
+
+Encryption keys are also tagged with a type and length  when
+they appear in messages.  Since it is conceivable to use the
+same key type in multiple encryption systems (e.g. different
+variations  on  DES  encryption),  the  key type may not map
+one-to-one to the encryption type.
+
+Each encryption algorithm is responsible for providing  suf-
+ficient  integrity  protection for the plaintext so that the
+receiver can verify that the ciphertext was not  altered  in
+transit.  If the algorithm does not have such properties, it
+can be augmented by including a checksum  in  the  plaintext
+before  encryption.   By doing this, we can discard the PCBC
+DES mode, and use the standard CBC  mode  with  an  embedded
+checksum  over  the  plaintext.  It is important to consider
+the effects of chosen plaintext attacks when  analyzing  the
+message  integrity  properties of candidate encryption algo-
+rithms.  Some potential weaknesses were found  with  encryp-
+tion and checksum methods in initial drafts of the Version 5
+protocol [Stu92].  These weaknesses were corrected in subse-
+quent revisions.
+
+
+
+
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 11 -
+
+
+_N_e_t_w_o_r_k _a_d_d_r_e_s_s_e_s
+
+When network addresses appear in protocol messages, they are
+similarly  tagged  with a type and length field so the reci-
+pient can interpret them properly.  If a host supports  mul-
+tiple  network protocols or has multiple addresses of a sin-
+gle type, all types and all addresses can be provided  in  a
+ticket.
+
+_M_e_s_s_a_g_e _e_n_c_o_d_i_n_g
+
+Network messages  in  Version  5  are  described  using  the
+Abstract  Syntax  Notation  One (ASN.1) syntax [ISO8824] and
+encoded according to the  basic  encoding  rules  [ISO8825].
+This  avoids  the  problem  of  independently specifying the
+encoding for multi-byte quantities as was done in Version 4.
+It  makes the protocol description look quite different from
+Version 4, but it is primarily the presentation of the  mes-
+sage  fields  that changes; the essence of the Kerberos Ver-
+sion 4 protocol remains.
+
+_T_i_c_k_e_t _c_h_a_n_g_e_s
+
+The Kerberos Version 5 ticket  has  an  expanded  format  to
+accommodate  the required changes from the Version 4 ticket.
+It is split into two parts,  one  encrypted  and  the  other
+plaintext.   The  server's  name  in the ticket is plaintext
+since a server with multiple  identities,  e.g.   an  inter-
+realm  TGS,  may need the name to select a key with which to
+decrypt the the remainder of the ticket  (the  name  of  the
+server is bookkeeping information only and its protection is
+not necessary for secure authentication).   Everything  else
+remains  encrypted.   The  ticket  lifetime  is encoded as a
+starting time and an expiration time (rather than a specific
+lifetime  field),  affording  nearly  limitless ticket life-
+times.  The new ticket also contains a new flags  field  and
+other  new  fields used to enable the new features described
+later.
+
+_N_a_m_i_n_g _p_r_i_n_c_i_p_a_l_s
+
+Principal identifiers are multi-component names in  Kerberos
+Version  5.   The  identifier  is  encoded in two parts, the
+realm and the remainder of the name.  The realm is  separate
+to  facilitate  easy  implementation of realm-traversal rou-
+tines and realm-sensitive access checks.  The  remainder  of
+the name is a sequence of however many components are needed
+to name the principal.  The realm and each component of  the
+remainder  are  encoded as separate ASN.1 GeneralStrings, so
+there are  few  practical  restrictions  on  the  characters
+available for principal names.
+linewid = 1.5i boxht = .3i boxwid = 1.2i down EDU: box "EDU"
+move  down  .5i  BERK: box "Berkeley.EDU" move left .5i from
+BERK.w MITEDU: box "MIT.EDU"  move  right  .5i  from  BERK.e
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 12 -
+
+
+UMICH:  box  "UMICH.EDU" move down .5i from UMICH.s boxwid =
+1.5i IFSUMICH: box "IFS.UMICH.EDU" line <-> from  EDU.sw  to
+MITEDU.n  line <-> from EDU.s to BERK.n line <-> from EDU.se
+to UMICH.n line <-> from UMICH.s to  IFSUMICH.n  arrowwid  =
+.1i  arrowht  =  .15i  line  <->  dashed  from  MITEDU.s  to
+IFSUMICH.w "shortcut link      " rjust # reset  to  defaults
+arrowwid = 0.05i arrowht = 0.1i
+         Figure 5: _A _V_e_r_s_i_o_n _5 _h_i_e_r_a_r_c_h_y _o_f _r_e_a_l_m_s
+
+
+_I_n_t_e_r-_r_e_a_l_m _s_u_p_p_o_r_t
+
+In Version 5, Kerberos realms cooperate through a  hierarchy
+based  on  the  name  of the realm (see Figure 5).  A source
+realm is interoperable with a destination realm if it shares
+an  inter-realm  key directly with the destination realm, or
+if it shares a key with an intermediate realm that is itself
+interoperable   with  the  destination  realm.   Each  realm
+exchanges a different pair  of  inter-realm  keys  with  its
+parent node and each child.  These keys are used in a common
+encryption system to  obtain  tickets  for  each  successive
+realm  along  the path.  This arrangement reduces the number
+of key exchanges to O(log(n)).
+
+When an application needs to contact a server in  a  foreign
+realm,  it  "walks" up and down the tree toward the destina-
+tion realm, contacting each realm's KDC in turn, asking  for
+a  ticket-granting  ticket  to  the  foreign realm.  In most
+cases, the KDC will issue a ticket for the next node in  the
+proper  direction on the tree.  If a realm has established a
+"shortcut" spanning link with  some  realm  further  in  the
+path,  it  issues  a  ticket-granting  ticket for that realm
+instead.   This  way  every  realm  can  interoperate,   and
+heavily-traveled paths can be optimized with a direct link.
+
+When a ticket for the end service is finally issued, it will
+contain  an  enumeration  of all the realms consulted in the
+process of requesting the  ticket.   An  application  server
+which  applies  strict  authorization  rules is permitted to
+reject authentication which passes through certain untrusted
+realms.
+
+_4._2.  _N_e_w _p_r_o_t_o_c_o_l _f_e_a_t_u_r_e_s _i_n _V_e_r_s_i_o_n _5
+
+In addition to the  changes  discussed  above,  several  new
+features are supported in Version 5.
+
+_T_i_c_k_e_t_s
+
+Version 5 tickets contain several additional timestamps  and
+a  flags  field.  These changes allow greater flexibility in
+the use of tickets than was available in Version 4.
+
+Each ticket issued by  the  KDC  using  the  initial  ticket
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 13 -
+
+
+exchange  is flagged as such.  This allows servers such as a
+password changing server to require that a client present  a
+ticket  obtained by direct use of the client's secret key K9c
+8instead of one obtained using a  TGT.   Such  a  requirement
+prevents  an  attacker  from walking up to an unattended but
+logged in workstation and changing another user's password.
+
+Tickets may be issued as renewable tickets with two  expira-
+tion  times,  one  for  a  time  in the near future, and one
+later.  The ticket expires as usual at the earlier time, but
+if  it  is  presented to the KDC in a renewal request before
+this  earlier  expiration  time,  a  replacement  ticket  is
+returned  which  is  valid for an additional period of time.
+The KDC will not renew a ticket beyond the second expiration
+indicated  in  the ticket.  This mechanism has the advantage
+that although the credentials can be used for  long  periods
+of  time,  the  KDC  may  refuse  to renew tickets which are
+reported as stolen and thereby thwart their continued use.
+
+A similar mechanism is available  to  assist  authentication
+during  batch  processing.  A ticket issued as postdated and
+invalid will not be valid until its post-dated starting time
+passes  and  it  is  replaced  with a validated ticket.  The
+client validates the ticket by presenting it to the  KDC  as
+described above for renewable tickets.
+
+Authentication forwarding can be implemented  by  contacting
+the KDC with the additional ticket exchange and requesting a
+ticket valid for a different set of addresses than  the  TGT
+used  in  the  request.  The KDC will not issue such tickets
+unless the presented TGT has a flag set indicating that this
+is  a permissible use of the ticket.  When the entity on the
+remote host is  granted  only  limited  rights  to  use  the
+authentication, the forwarded credentials are referred to as
+a _p_r_o_x_y  (after  the  proxy  used  in  legal  and  financial
+affairs).   Proxies are handled similarly to forwarded tick-
+ets, except that new proxy tickets will not be issued for  a
+ticket-granting service; they will only be issued for appli-
+cation server tickets.
+
+In certain situations, an application server (such as  an  X
+Window  System  server)  will  not  have reliable, protected
+access to an encryption key necessary for normal  participa-
+tion  as  a server in the authentication exchanges.  In such
+cases, if the server has access to a user's  ticket-granting
+ticket  and  associated  session  key  (which in the case of
+single-user workstations may well be the case), it can  send
+this  ticket-granting  ticket to the client, who presents it
+and the user's own ticket-granting ticket to the  KDC.   The
+KDC  then  issues a ticket encrypted in the session key from
+the server's ticket-granting ticket; the application  server
+has  the proper key to decrypt and process this ticket.  The
+details of such an exchange are presented in [Dav90].
+
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 14 -
+
+
+_A_u_t_h_o_r_i_z_a_t_i_o_n _d_a_t_a
+
+Kerberos is concerned primarily with authentication;  it  is
+not  directly  concerned with the related security functions
+of authorization and accounting.  To support the implementa-
+tion of these related functions by other services, Version 5
+of  Kerberos  provides  a  mechanism  for  the  tamper-proof
+transmission  of authorization and accounting information as
+part of a ticket.  This information takes the form  of  res-
+trictions on the use of a ticket.  The encoding of each res-
+triction is not a concern of the Kerberos protocol,  but  is
+instead defined by the authorization or accounting mechanism
+in use.  Restrictions are carried in the _a_u_t_h_o_r_i_z_a_t_i_o_n  _d_a_t_a
+field of the ticket.
+
+When a ticket is requested, restrictions are sent to the KDC
+where they are inserted into the ticket, encrypted, and thus
+protected from tampering.  In the  protocol's  most  general
+form,  a client may request that the KDC include or add such
+data to a new ticket.  The KDC does not remove any  authori-
+zation data from a ticket; the TGS always copies it from the
+TGT into the new ticket, and then adds any  requested  addi-
+tional authorization data.  Upon decryption of a ticket, the
+authorization data is available to the  application  server.
+While  Kerberos  makes  no  interpretation  of the data, the
+application server is expected to use the authorization data
+to   appropriately  restrict  the  client's  access  to  its
+resources.
+
+Among other uses, the _a_u_t_h_o_r_i_z_a_t_i_o_n _d_a_t_a field can  be  used
+in  a  proxy  ticket  to  create  a  capability.  The client
+requesting the proxy from the KDC specifies  any  authoriza-
+tion  restrictions  in the authorization data, then securely
+transmits the proxy and session key to another party,  which
+uses  the  ticket to obtain limited service from an applica-
+tion server.  Neuman  [Neu91] discusses possible uses of the
+_a_u_t_h_o_r_i_z_a_t_i_o_n _d_a_t_a field in detail.
+
+The  Open  Software   Foundation's   Distributed   Computing
+Environment  uses  the _a_u_t_h_o_r_i_z_a_t_i_o_n _d_a_t_a field for the gen-
+eration  of   privilege   attribute   certificates   (PACs).
+Privilege  information  is maintained by a privilege server.
+When a PAC is requested by a  client  the  privilege  server
+requests  a Kerberos ticket identifying the privilege server
+itself, but restricting  the  groups  to  which  the  client
+belongs  and  specifying a DCE specific user ID.  The ticket
+is then returned to the client which uses it to  assert  its
+DCE  user  ID and prove membership in the listed groups.  In
+essence, the privilege server  grants  the  client  a  proxy
+authorizing  the  client  to  act as the privilege server to
+assert the listed DCE user ID and membership in  the  listed
+groups.   If  the  ticket  did  not include restrictions, it
+would indicate that the client  was  the  privilege  server,
+allowing  the client to assert any user ID and membership in
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 15 -
+
+
+any group.
+
+_P_r_e-_a_u_t_h_e_n_t_i_c_a_t_i_o_n _d_a_t_a
+
+In an effort to complicate the theft of passwords, the  Ker-
+beros Version 5 protocol provides fields in the initial- and
+additional-ticket exchanges to support password alternatives
+such  as hand-held authenticators (devices which have inter-
+nal circuitry used to generate a continually changing  pass-
+word).   In the initial ticket exchange, these fields can be
+used to alter the key K9c8 in which the  reply  is  encrypted.
+This makes a stolen password useless since fresh information
+from a physical device is needed to decrypt a response.  The
+field can also be used to prove the client's identity to the
+KDC before any ticket is issued.  Doing this makes it a lit-
+tle  more difficult for an attacker to obtain a message that
+can be used to verify password guesses.
+
+This pre-authentication data field is used by the client  in
+the  additional  ticket exchange to pass the ticket-granting
+ticket to the KDC; since  it  is  a  variable-length  array,
+other values may be sent in the additional-ticket exchange.
+
+_S_u_b_s_e_s_s_i_o_n _k_e_y _n_e_g_o_t_i_a_t_i_o_n
+
+Tickets are cached by clients for later use.  To avoid prob-
+lems  caused  by  the reuse of a ticket's session key across
+multiple connections, a server and client can  cooperate  to
+choose  a new _s_u_b_s_e_s_s_i_o_n _k_e_y which is used to protect a sin-
+gle connection.  This subsession key is discarded  once  the
+connection is closed.
+
+Negotiation of subsession keys allows an application to pro-
+tect  the  privacy  of  messages  broadcast to several reci-
+pients.  The application  can  individually  negotiate  with
+each  recipient to use a common subsession key before begin-
+ning the broadcasts.
+
+_S_e_q_u_e_n_c_e _n_u_m_b_e_r_s
+
+Kerberos provides two message formats  for  applications  to
+protect  their  communications.  The KRB_SAFE message uses a
+cryptographic  checksum  to  insure  data  integrity.    The
+KRB_PRIV  message  uses  encryption  to insure integrity and
+privacy.  In Version 4 these messages  included  as  control
+information  a  timestamp  and the sender's network address.
+With Version 5, an application may elect to use a  timestamp
+(as before) or a sequence number.  If the timestamp is used,
+the receiver must  record  the  known  timestamps  to  avoid
+replay  attacks;  if  a sequence number is used the receiver
+must verify that the messages arrive  in  the  proper  order
+without  gaps.   There are situations where one choice makes
+applications simpler (or even possible)  to  implement;  see
+the discussions in  [Koh92].
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 16 -
+
+
+_5.  _I_m_p_l_e_m_e_n_t_a_t_i_o_n _f_e_a_t_u_r_e_s
+
+
+_5._1.  _T_h_e _b_a_s_e _i_m_p_l_e_m_e_n_t_a_t_i_o_n
+
+The MIT implementation of the Version 5  protocols  is  com-
+posed of several run-time libraries with which a program may
+link.  The core library functions will probably be  used  by
+all  applications;  other  libraries  or  subsystems  may be
+replaced or omitted as needed by an application  programmer.
+All code is currently written in "C."
+
+The base functions: The core Kerberos library  contains  the
+     routines  which assemble, disassemble and interpret the
+     network messages.  This  includes  ASN.1  encoding  and
+     decoding  functions  which  convert  from  a  machine's
+     native format to the network encoding (currently  based
+     on the ISODE package, but another ASN.1 support package
+     may  be  substituted),  routines  which   verify   that
+     requests  are  answered  as  expected,  and routines to
+     determine which messages are necessary.  This core  set
+     of  routines calls out to the remaining portions of the
+     library as required.  A programmer  may  replace  those
+     portions at certain specified interfaces.
+
+Encryption routines: Since multiple encryption types may  be
+     in  use simultaneously, the core functions call encryp-
+     tion  routines  through  a  function  table  which  has
+     entries  provided by each encryption system implementa-
+     tion.  The core library provides a default cryptosystem
+     table,  initialized to list the known encryption types.
+     A programmer may load his  own  cryptosystem  table  to
+     replace  the  default  table and avoid linking with the
+     default encryption libraries.
+
+     In an attempt to alleviate some  possible  export  res-
+     trictions, MIT's implementation distributes its encryp-
+     tion systems separately from the remainder of the  sys-
+     tem.  Only DES is currently available from MIT.
+
+Checksum routines: In a similar fashion  to  the  encryption
+     routines,  the  core  routines call any needed checksum
+     functions through a function  table,  and  compute  any
+     necessary  sizes based on the information in the table.
+     Certain applications  of  checksum  technology  require
+     that  the  checksum have certain properties.  The table
+     entry indicates whether  the  checksum  is  keyed  (its
+     algorithm  is perturbed by an encryption key which can-
+     not be discovered with knowledge only of the  algorithm
+     and  the  checksummed text) and whether the checksum is
+     collision proof (it is  computationally  infeasible  to
+     discover  a  different checksum text which has the same
+     checksum).  The core  library  provides  a  replaceable
+     default checksum table.
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 17 -
+
+
+     Four checksums are currently available  from  MIT:  the
+     CRC-32, which is neither keyed nor collision proof (but
+     it is useful for  integrity  checks  within  encryption
+     systems);  the  DES  message authentication code (MAC),
+     which is  both  keyed  and  collision  proof,  and  MD4
+     [Riv92a]  and MD5 [Riv92b], both of which are collision
+     proof but not keyed.
+
+Credentials cache and key table routines: When clients store
+     tickets  and  credentials in a cache, the core routines
+     call out through a credentials cache table entry  to  a
+     separate  library  module  which implements the storing
+     and searching  routines  for  credentials  caches.   An
+     environment variable can be used to specify the default
+     type and location of a credentials cache, so a user can
+     switch  between different types and locations of caches
+     as needed (perhaps to  keep  the  credentials  for  two
+     roles  separate).   MIT's  implementation  provides two
+     credentials  cache  implementations,  one  built  on  C
+     "stdio"  routines  and  the  other  built on UNIX file-
+     descriptor semantics.  Other implementations could pro-
+     vide shared-memory or kernel-resident caches.
+
+     Servers likewise store their  secret  keys  K9s8  in  key
+     tables accessed by the core routines through a function
+     table.   MIT's  implementation  provides  a  key  table
+     library built on C "stdio" routines.
+
+KDC database support: All accesses to  the  KDC's  principal
+     database  by  the  KDC  and administrative programs are
+     mediated by a database library which can be replaced if
+     needed.   MIT's  implementation uses the UNIX _d_b_m data-
+     base system.  Since _d_b_m does not provide any record  or
+     database  locking,  its  use is augmented with separate
+     locking code to mediate between  writers  and  readers.
+     Administrative  requests (e.g. adding entries, changing
+     keys or passwords) can be handled on-line.
+
+Operating system support: Although it is targeted  for  UNIX
+     systems,  the  MIT  implementation is careful to access
+     operating  system  features  only  from  a  few   well-
+     contained modules.  An operating system support library
+     performs all the accesses required by the rest  of  the
+     code,  such  as transmitting and receiving network mes-
+     sages,  examining  configuration  files,  checking  the
+     system's time-of-day, translating from account names to
+     Kerberos names (and _v_i_c_e _v_e_r_s_a), and  performing  rudi-
+     mentary account access checks.
+
+_5._2.  _U_s_e_r _i_n_t_e_r_a_c_t_i_o_n
+
+If all parts of Kerberos are working  properly,  users  will
+not normally be aware that Kerberos authentication is in use
+by their applications.  The normal login process obtains and
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 18 -
+
+
+caches  an  initial ticket-granting ticket, and applications
+automatically obtain and cache service tickets as  required.
+Only  when  authentication  fails will users become aware of
+the underlying use of Kerberos.
+
+If users need to refresh tickets  (e.g.,  if  they  expire),
+then  they  can  use the _k_i_n_i_t program, which will get a new
+ticket-granting ticket after reading  a  password  from  the
+keyboard.   Users  examine the cached tickets with _k_l_i_s_t and
+destroy the cache with _k_d_e_s_t_r_o_y.
+
+When principal names need to be displayed to human users, by
+convention|- they are represented as  the  sequence  of  name
+components  separated by slashes (/), followed by an at-sign
+(@), and the realm name.  Thus, a principal  with  two  name
+components userX and role2 in the realm ATHENA.MIT.EDU would
+be represented as userX/role2@ATHENA.MIT.EDU.
+
+_P_a_s_s_w_o_r_d _t_o _k_e_y _c_o_n_v_e_r_s_i_o_n
+
+Since users are not good at  remembering  binary  encryption
+keys,  Kerberos  provides  routines  which convert passwords
+into keys.  The algorithm used to convert a password into an
+encryption  key performs a non-invertible transformation, so
+that an attacker cannot discover a user's  password  knowing
+only K9c8.  In Version 5, the conversion can be seeded with an
+additional string (often the realm name) which perturbs  the
+output  key,  so  that  a user who is registered in multiple
+realms and uses the same password in  two  of  those  realms
+will  have  a different K9c8 in each realm.  Without this per-
+turbation, an attacker discovering the  user's  key  in  one
+realm  could  impersonate  that  user  in  the  other realm,
+without needing to know the user's password.  When no  addi-
+tional perturbation string is supplied, the resulting key is
+the same as the key produced by the Version 4 algorithm.
+
+_5._3.  _C_o_m_p_a_t_i_b_i_l_i_t_y _s_u_p_p_o_r_t _f_o_r _V_e_r_s_i_o_n _4
+
+There is a small but growing  base  of  Kerberos  Version  4
+applications,  and a number of sites running a Kerberos Ver-
+sion 4 authentication server. MIT's implementation  of  Ver-
+sion  5  provides  several  compatibility features which can
+help sites and programmers convert to Version 5.
+
+Interface compatibility: MIT's implementation of  Version  5
+     includes  a  "glue  library"  which presents a Kerberos
+     Version 4 application programming interface  (API)  but
+     which  uses  Version  5 protocol messages and routines.
+     This  library  converts  data  structures  as  much  as
+__________________________
+|- Please note that this is only a _c_o_n_v_e_n_t_i_o_n, and other
+implementations  may  display  the principal names dif-
+ferently.
+
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 19 -
+
+
+     possible between the differing Version 4 and Version  5
+     data  structures.  In many cases (especially those that
+     use only a common subset of the Version 4 library func-
+     tions),  an application originally written for Kerberos
+     Version 4 need only be re-linked with this library  and
+     the  remainder  of  the Version 5 code to use Version 5
+     protocols.  However, such applications will  no  longer
+     be  compatible  with  older peer processes, which would
+     still expect the  Version  4  messages,  and  continued
+     maintenance may be made more difficult.
+
+A generic authentication  interface:  The  Generic  Security
+     Services  API  (GSSAPI)   [Lin91] is an authentication-
+     system  independent  programming  interface  which   is
+     currently  being developed by the Common Authentication
+     Technology Working Group within the Internet  Engineer-
+     ing  Task  Force.   The  GSSAPI  provides  a convenient
+     abstraction boundary for applications writers who  wish
+     to  take  advantage  of multiple authentication systems
+     (even ones not yet invented),  without  needing  to  be
+     aware  of  any  of the details of those systems.  Since
+     the GSSAPI only provides access to those basic  authen-
+     tication  services  which  form  a  common  denominator
+     across different authentication  systems,  applications
+     which need access to specialized features provided by a
+     particular authentication system  will  still  need  to
+     code  to that  system's native interface.  However, the
+     basic functionality to which the GSSAPI provides access
+     should  be sufficient for the majority of applications.
+     MIT provides a binding of this interface  to  the  Ker-
+     beros Version 5 implementation.
+
+Protocol compatibility: For those sites which wish  to  con-
+     vert  the  Kerberos  server  to provide the features of
+     Version 5, a compatibility mode may be enabled  on  the
+     KDC  which  causes  it  to  accept Version 4 format KDC
+     requests and respond with Version 4 format tickets  and
+     messages,   as  well  as  accepting  Version  5  format
+     requests.  This allows an administrator  to  convert  a
+     Version 4 installation to Version 5 slowly, by support-
+     ing the old users with the compatibility  code.   After
+     some grace period, the Version 4 compatibility would be
+     turned off.  If a user wishes to use both Version 4 and
+     Version  5 programs simultaneously, the user's key must
+     be encoded using  the  Version  4  style  string-to-key
+     algorithm; the Version 5 response will include informa-
+     tion in  the  pre-authentication  data  of  the  ticket
+     response  to  indicate  which  string-to-key  algorithm
+     should be used by the Version 5 client.
+
+Interface coexistence: The MIT Version 5 libraries were pur-
+     posely  designed  to allow an application to simultane-
+     ously support both Versions 4 and 5, and  this  is  the
+     suggested   compatibility  mode.   The  telnet  [Pos83]
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 20 -
+
+
+     program distributed with the MIT code can automatically
+     choose an authentication system to use when it connects
+     to a remote system, based on what credentials the  user
+     holds  and  what  Versions of authentication the remote
+     telnet server will accept.  It implements  the  current
+     draft specifications of the authentication [Bor92a] and
+     encryption [Bor91] options for both Kerberos Version  5
+     [Bor92b] and Kerberos Version 4 [Bor92c] authentication
+     systems.
+
+Program compatibility: Another possible  compatibility  mode
+     can  be  fabricated  by  maintaining separate copies of
+     network applications which use Version 4 and Version  5
+     protocol  messages.   The user would use a generic name
+     for the application, and the application would try each
+     authentication  system in turn, by executing a separate
+     copy of the program for each  system  (see  Figure  6).
+     When  authentication  is  successfully  completed,  the
+     application would  proceed  as  normal.   On  both  the
+     client  and  server  sides  of  the  application,  this
+     approach requires two copies of the same program,  each
+     linked  with  a  different  authentication system.  The
+     different versions of  the  server  would  each  accept
+     requests  at different network ports, and the different
+     clients would only send a request to the  server  which
+     supports its authentication type.
+
+     This approach could be  mixed  with  the  glue  library
+     and/or   single-server   approaches,  by  creating  the
+     separate clients using the glue library and/or using  a
+     single server program which understands both protocols.
+linewid = 1.5i ellipsewid = .7i Client1: ellipse "Client  A"
+line  <-> "try protocol A" above Server1: ellipse "Server A"
+line -> down 1i from Client1.s dashed  "  (execute  B  if  A
+fails)"  ljust  Client2:  ellipse  "Client B" line <-> right
+from Client2.e  "try  protocol  B"  above  Server2:  ellipse
+"Server  B"  line  <->  from Server1.s to Server2.n dashed "
+(might be the same program)" ljust
+     Figure 6: _I_m_p_l_e_m_e_n_t_i_n_g _p_r_o_t_o_c_o_l _c_o_m_p_a_t_i_b_i_l_i_t_y _b_y _e_x_e_c_u_t_i_n_g _s_e_p_a_r_a_t_e _p_r_o_g_r_a_m_s
+
+
+_6.  _F_u_t_u_r_e _w_o_r_k
+
+Version 5 of Kerberos is a step  toward  the  design  of  an
+authentication  system that is widely applicable. We believe
+the framework  is  flexible  enough  to  accommodate  future
+requirements.   Some  items  we expect to add to Kerberos in
+the near future include:
+
+Public-key cryptosystems: The encryption  specifications  in
+     Kerberos  Version  5 are designed primarily for secret-
+     key cryptosystems, but we are considering  support  for
+     public-key  cryptosystems.   One advantage of such sup-
+     port will be  the  ability  to  interoperate  with  the
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 21 -
+
+
+     evolving   certificate   infrastructure   for   Privacy
+     Enhanced Mail.  There is also work  proceeding  on  the
+     development  of a hybrid Internet Authentication System
+     (IAS) that will provide interoperability  between  Ker-
+     beros  and  public  key  based  systems such as Digital
+     Equipment Corporation's DASS [Tar91].
+
+Smartcards: Several companies manufacture hand-held  devices
+     which  can  be used to augment normal password security
+     methods, and there is strong interest within the indus-
+     try to integrate one or more of these systems with Ker-
+     beros.  Work is underway to use the  pre-authentication
+     data field to pass the additional information needed to
+     use such devices.
+
+     In the more distant future it might also be possible to
+     program  a  smartcard to directly take part in the Ker-
+     beros  protocol.   To  do  so  would  require   special
+     hardware to support communication between the smartcard
+     and the workstation (so that the smartcard  could  com-
+     municate  with  the  KDC).   The  advantage  of such an
+     approach is that the initial  Kerberos  exchange  could
+     take place without making the user's password available
+     to a potentially untrusted workstation.
+
+Remote administration: The current  protocol  specifications
+     do  not  specify an administrative interface to the KDC
+     database.   MIT's  implementation  provides  a   sample
+     remote  administration program which allows administra-
+     tors to add and modify  entries  and  users  to  change
+     their keys.  We would like to standardize such a proto-
+     col.  Some features we would like to add include remote
+     extraction  of  server  key  tables,  password "quality
+     checks," and a provision for servers  to  change  their
+     secret keys automatically every so often.
+
+Database propagation: The  current  implementation  provides
+     reliable KDC service by a periodic bulk-copy of the KDC
+     database to slave KDC machines.  It might be more  con-
+     venient  and/or  efficient  to build the KDC on distri-
+     buted database technologies.  However, to  insure  that
+     an  attacker  cannot illegitimately obtain any database
+     entry, the technology must provide for  private  secure
+     transmission of the database elements to each server,
+
+Validation  suites:  The  current  implementation  does  not
+     include  a complete validation suite to verify that the
+     protocol is properly implemented.  Such a  suite  could
+     prevent  future  security  problems  in  the  case of a
+     faulty  implementation,  and  would   help   facilitate
+     interoperation of diverse implementations.
+
+Applications: There are many network applications that would
+     benefit from the addition of authentication.  Among the
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 22 -
+
+
+     highly visible examples are  electronic  mail,  popular
+     bulletin-board  systems  (such  as Usenet), and distri-
+     buted file  systems.   It  is  hoped  that  application
+     designers  will  consider  authentication  and  related
+     security services when designing their protocols.   The
+     generic  application  programming interface should go a
+     long way toward making it possible to do so.
+
+_A_c_k_n_o_w_l_e_d_g_e_m_e_n_t_s
+
+The work described here has been the result of many MIT Pro-
+ject Athena and MIT Network Services staff members' visions,
+ideas, and hard work.
+
+The authors would especially like to thank  Steve  Bellovin,
+Jennifer  Steiner,  and  Ralph  Swick  for their comments on
+early drafts of this paper.
+
+_R_E_F_E_R_E_N_C_E_S
+
+
+
+Bel90.   S. M. Bellovin and M. Merritt, "Limitations of  the
+         Kerberos  Authentication System," _C_o_m_p_u_t_e_r _C_o_m_m_u_n_i_-
+         _c_a_t_i_o_n_s _R_e_v_i_e_w, Vol.  20(5),  pp. 119-132  (October
+         1990).
+
+Cha90.   George A. Champine, Daniel E. Geer, and William  N.
+         Ruh, "Project Athena as a Distributed Computer Sys-
+         tem," _I_E_E_E _C_o_m_p_u_t_e_r, Vol.  23(9),  pp. 40-50  (Sep-
+         tember 1990).
+
+Bor91.   D.  Borman,  Editor,  "Telnet  Encryption  Option,"
+         Internet-Draft,   Internet  Engineering Task Force,
+         Telnet Working Group (July 1991).
+
+Bor92a.  D. Borman, Editor, "Telnet Authentication  Option,"
+         Internet-Draft,   Internet  Engineering Task Force,
+         Telnet Working Group (February 1992).
+
+Bor92b.  D. Borman, Editor, "Telnet Authentication: Kerberos
+         Version  5,"  Internet-Draft,  Internet Engineering
+         Task Force, Telnet Working Group (February 1992).
+
+Bor92c.  D. Borman, Editor, "Telnet Authentication: Kerberos
+         Version  4,"  Internet-Draft,  Internet Engineering
+         Task Force, Telnet Working Group (February 1992).
+
+Dav90.   Don Davis and Ralph  Swick,  "Workstation  Services
+         and  Kerberos  Authentication  at  Project Athena,"
+         Technical Memorandum TM-424,   MIT  Laboratory  for
+         Computer Science (February 1990).
+
+Jue85.   R. R. Jueneman, S. M.  Matyas,  and  C.  H.  Meyer,
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 23 -
+
+
+         "Message Authentication," _I_E_E_E _C_o_m_m_u_n_i_c_a_t_i_o_n_s, Vol.
+         23(9), pp. 29-40 (September 1985).
+
+Koh89.   John T. Kohl, "The Use of  Encryption  in  Kerberos
+         for  Network Authentication," in _C_r_y_p_t_o '_8_9 _C_o_n_f_e_r_-
+         _e_n_c_e  _P_r_o_c_e_e_d_i_n_g_s,  International  Association  for
+         Cryptologic  Research,  Santa  Barbara,  CA (August
+         1989).
+
+Koh92.   John T. Kohl and B. Clifford Neuman, "The  Kerberos
+         Network Authentication Service," Version 5 Revision
+         5,   Project  Athena,  Massachusetts  Institute  of
+         Technology (April 1992).
+
+Lin91.   John Linn, "Generic  Security  Service  Application
+         Program   Interface,"   Internet-Draft,    Internet
+         Engineering Task Force, Common Authentication Tech-
+         nology Working Group (June 1991).
+
+Lom89.   T. Mark A. Lomas, Li Gong, Jerome H.  Saltzer,  and
+         Roger  M.  Needham,  "Reducing  Risks  from  Poorly
+         Chosen Keys," _O_p_e_r_a_t_i_n_g _S_y_s_t_e_m_s _R_e_v_i_e_w, Vol. 23(5),
+         pp. 14-18 (December 1989).
+
+Mer90.   Ralph C. Merkle, "Fast  Software  Encryption  Func-
+         tions,"   in  _C_r_y_p_t_o  '_9_0  _C_o_n_f_e_r_e_n_c_e  _P_r_o_c_e_e_d_i_n_g_s,
+         International Association for Cryptologic Research,
+         Santa Barbara, CA (August 1990).
+
+Mil87.   S. P. Miller, B. C. Neuman, J. I. Schiller, and  J.
+         H.  Saltzer, _S_e_c_t_i_o_n _E._2._1: _K_e_r_b_e_r_o_s _A_u_t_h_e_n_t_i_c_a_t_i_o_n
+         _a_n_d _A_u_t_h_o_r_i_z_a_t_i_o_n _S_y_s_t_e_m,  M.I.T.  Project  Athena,
+         Cambridge, Massachusetts (December 21, 1987).
+
+FIPS46.  National Bureau of Standards,  U.S.  Department  of
+         Commerce,   "Data   Encryption  Standard,"  Federal
+         Information Processing  Standards  Publication  46,
+         Washington, DC (1977).
+
+FIPS81.  National Bureau of Standards,  U.S.  Department  of
+         Commerce,  "DES Modes of Operation," Federal Infor-
+         mation   Processing   Standards   Publication   81,
+         Springfield, VA (December 1980).
+
+Nee78.   Roger M. Needham and Michael D.  Schroeder,  "Using
+         Encryption  for Authentication in Large Networks of
+         Computers," _C_o_m_m_u_n_i_c_a_t_i_o_n_s _o_f _t_h_e _A_C_M, Vol. 21(12),
+         pp. 993-999 (December, 1978).
+
+Neu91.   B. Clifford Neuman, "Proxy-Based Authorization  and
+         Accounting   for  Distributed  Systems,"  Technical
+         Report 91-02-01,  Department  of  Computer  Science
+         and  Engineering,  University  of Washington (March
+         1991).
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 24 -
+
+
+Pos83.   J. Postel and J. Reynolds, "TELNET Protocol Specif-
+         ication," RFC 854,  University of Southern Califor-
+         nia, Information Sciences Institute  (May 1983).
+
+Riv92a.  R. Rivest, "The MD4 Message Digest Algorithm,"  RFC
+         1320,   MIT  Laboratory for Computer Science (April
+         1992).
+
+Riv92b.  R. Rivest, "The MD5 Message Digest Algorithm,"  RFC
+         1321,   MIT  Laboratory for Computer Science (April
+         1992).
+
+Riv78.   R. L. Rivest, A. Shamir, and L. Adleman, "A  Method
+         for  Obtaining  Digital  Signatures  and Public-Key
+         Cryptosystems," _C_o_m_m_u_n_i_c_a_t_i_o_n_s  _o_f  _t_h_e  _A_C_M,  Vol.
+         21(2),  pp. 120-126 (February 1978).  See also U.S.
+         Patent 4,405,829.
+
+ISO8824. International  Organization  for   Standardization,
+         "Information  Processing  Systems  -  Open  Systems
+         Interconnection - Specification of Abstract  Syntax
+         Notation  One  (ASN.1),"  IS  8824 (December 1987).
+         First Edition.
+
+ISO8825. International  Organization  for   Standardization,
+         "Information  Processing  Systems  -  Open  Systems
+         Interconnection - Specification of  Basic  Encoding
+         Rules for Abstract Syntax Notation One (ASN.1)," IS
+         8825 (November 1987).  First Edition.
+
+Ste88.   J. G. Steiner, B. C. Neuman, and  J.  I.  Schiller,
+         "Kerberos:  An Authentication Service for Open Net-
+         work Systems," pp.  191-202  in  _U_s_e_n_i_x  _C_o_n_f_e_r_e_n_c_e
+         _P_r_o_c_e_e_d_i_n_g_s, Dallas, Texas (February, 1988).
+
+Stu92.   Stuart G. Stubblebine and  Virgil  D.  Gligor,  "On
+         Message  Integrity  in Cryptographic Protocols," in
+         _P_r_o_c_e_e_d_i_n_g_s _o_f _t_h_e _I_E_E_E _S_y_m_p_o_s_i_u_m  _o_n  _R_e_s_e_a_r_c_h  _i_n
+         _S_e_c_u_r_i_t_y  _a_n_d  _P_r_i_v_a_c_y,  Oakland,  California  (May
+         1992).
+
+Tar91.   Joseph J. Tardo and Kannan Alagappan, "SPX:  Global
+         Authentication  Using  Public Key Certificates," in
+         _P_r_o_c_e_e_d_i_n_g_s _o_f _t_h_e _I_E_E_E _S_y_m_p_o_s_i_u_m  _o_n  _R_e_s_e_a_r_c_h  _i_n
+         _S_e_c_u_r_i_t_y  _a_n_d  _P_r_i_v_a_c_y,  Oakland,  California  (May
+         1991).
+
+
+Kohl may be reached at UC Berkeley, Computer  Science  Divi-
+sion,  571  Evans  Hall,  Berkeley,  CA  94720, USA.  Email:
+jtkohl@cs.berkeley.edu.
+
+Neuman may be reached at USC/ISI, 4676 Admiralty Way, Marina
+del  Rey,  CA 90292-6695, USA.  Telephone +1 (310) 822-1511.
+
+
+                       June 17, 1992
+
+
+
+
+
+
+                           - 25 -
+
+
+Email: bcn@isi.edu.
+
+Ts'o may be reached at MIT Room E40-342b,  77  Massachusetts
+Avenue, Cambridge, MA  02139, USA.  Email: tytso@mit.edu.
+
+Project Athena, Athena, Athena MUSE, Discuss,  Hesiod,  Ker-
+beros, Moira, and Zephyr are trademarks of the Massachusetts
+Institute of Technology (MIT).  No commercial use  of  these
+trademarks  may  be made without prior written permission of
+MIT.
+X Window System is a trademark of MIT.
+UNIX is a registered trademark of Unix System  Laboratories,
+Inc. in the USA and other countries.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                       June 17, 1992
+
+
+
