@@ -1,12 +1,15 @@
 <html>
 <head>
     <script src="wolf-sheep.js"></script>
+    <script src="greedy.js"></script>
+    <script src="tricky.js"></script>
     <script>
         function render() {
           const canvas = document.getElementById("canvas")
           const strategyName = document.getElementById("selStrategy").value
-          const strategy = eval("new " + strategyName + "()")
-          const g = new Game(canvas, strategy, 0.01)
+          const dt = 0.001
+          const strategy = eval("new " + strategyName + "(" + dt + ")")
+          const g = new Game(canvas, strategy, dt)
           g.run()
         }
         window.addEventListener("load", () => {
@@ -17,7 +20,7 @@
 </head>
 <body>
 <select id="selStrategy">
-    <option value="DefaultStrategy">default</option>
+    <option value="DefaultStrategy">greedy</option>
     <option value="TrickyStrategy">tricky</option>
 </select>
 <br>
