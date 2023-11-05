@@ -28,18 +28,18 @@ sheep B runs away from sheep A.
 Result from page [racing.html](./wolf-sheep/racing.html) greedy strategy:
 ![greedy.png](./wolf-sheep/greedy.png)
 
-total time: 4.819540807542475.
+total time: 5.003527201219288.
 
 source code: [wolf-sheep.js](./wolf-sheep/greedy.js)
 
 # Sheep Strategy: Tricky
 
-If we known location F where sheep A is caught, then sheep B should run away from F,
+If we know location F where sheep A is caught, then sheep B should run away from F,
 while keeping $||WB||\ge||WA||$.
 
 Result from page [racing.html](./wolf-sheep/racing.html) tricky strategy:
 ![tricky.png](./wolf-sheep/tricky.png)
 
-total time: 5.026047508194805.
+total time: 5.024353154190957.
 
 source code: [wolf-sheep.js](./wolf-sheep/tricky.js)

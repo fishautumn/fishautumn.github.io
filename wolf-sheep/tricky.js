@@ -3,7 +3,7 @@ class TrickyStrategy extends DefaultStrategy {
 
   constructor(dt) {
     super()
-    this.final = {"x":-0.7203945444940342,"y":0.512766763598258}
+    this.final = {"x":-0.6772363455269725,"y":0.5739168632777377}
     this.dt = dt
   }
 
@@ -11,11 +11,12 @@ class TrickyStrategy extends DefaultStrategy {
     const dir1 = this.stepSheepNearWolf(wolf, sheep1, sheep2)
     var ns = new Agent(sheep1.x, sheep1.y, sheep1.speed)
     ns.moveInDir(dir1.x, dir1.y, this.dt)
-    const d1 = wolf.distanceTo(ns)
+    const d1 = wolf.distanceTo(ns) + 0.000000000001
 
     // keep distance(sheep2, wolf) >= d1, maximize distance(final, sheep2)
     ns = new Agent(sheep2.x, sheep2.y, sheep2.speed)
     var dir2 = coord(sheep2.x - this.final.x, sheep2.y - this.final.y)
+    ns.moveInDir(dir2.x, dir2.y, this.dt)
     if (d1 <= ns.distanceTo(wolf)) {
       return [dir1, dir2]
     }

@@ -65,9 +65,9 @@ class Game {
       //console.log("sheep1: " + JSON.stringify(this.sheep1) + "\nsheep2: " + JSON.stringify(this.sheep2) + "\nwolf: " + JSON.stringify(this.wolf))
       t1 += this.dt
     }
-    console.log("sheep1: " + JSON.stringify(this.sheep1) + "\nsheep2: " + JSON.stringify(this.sheep2) + "\ndistance: " + this.sheep1.distanceTo(this.sheep2))
+    console.log("sheep1: " + JSON.stringify(this.sheep1.position()) + "\nsheep2: " + JSON.stringify(this.sheep2.position()) + "\ndistance: " + this.sheep1.distanceTo(this.sheep2))
     const t2 = this.sheep1.distanceTo(this.sheep2) / (this.wolf.speed - this.sheep1.speed);
-    console.log("it takes " + t1 + " to catch sheep-1, total time: " + (t1 + t2));
+    console.log("it takes " + t1 + " to catch sheep1, total time: " + (t1 + t2));
   }
 
   line(ctx, old, agent, color) {
@@ -85,8 +85,9 @@ class Game {
   }
 
   moveWolf(dx, dy, dt) {
-    for (var idx in [this.sheep1, this.sheep2]) {
-      const sheep = [this.sheep1, this.sheep2][idx]
+    const sheepList = [this.sheep1, this.sheep2]
+    for (var idx in sheepList) {
+      const sheep = sheepList[idx]
       if (dx * (sheep.y - this.wolf.y) == dy * (sheep.x - this.wolf.x)) {
         if (this.wolf.distanceTo(sheep) <= this.wolf.speed * dt) {
           this.wolf.x = sheep.x
