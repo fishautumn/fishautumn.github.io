@@ -30,7 +30,7 @@ Result from page [racing.html](./wolf-sheep/racing.html) greedy strategy:
 
 total time: 5.003527201219288.
 
-source code: [wolf-sheep.js](./wolf-sheep/greedy.js)
+source code: [greedy.js](./wolf-sheep/greedy.js)
 
 # Sheep Strategy: Tricky
 
@@ -43,4 +43,4 @@ Result from page [racing.html](./wolf-sheep/racing.html) tricky strategy:
 
 total time: 5.036925208707695.
 
-source code: [wolf-sheep.js](./wolf-sheep/tricky.js)
+source code: [tricky.js](./wolf-sheep/tricky.js)
