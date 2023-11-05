@@ -34,12 +34,13 @@ source code: [wolf-sheep.js](./wolf-sheep/greedy.js)
 
 # Sheep Strategy: Tricky
 
-If we know location F where sheep A is caught, then sheep B should run away from F,
-while keeping $||WB||\ge||WA||$.
+If we know final locations (sheep A at F, sheep B at G) when sheep A is caught,
+then sheep A should choose direction that maximizes $||WA||+||AG||$,
+while sheep B should run away from F and keeping $||WB||\ge||WA||$.
 
 Result from page [racing.html](./wolf-sheep/racing.html) tricky strategy:
 ![tricky.png](./wolf-sheep/tricky.png)
 
-total time: 5.024353154190957.
+total time: 5.036925208707695.
 
 source code: [wolf-sheep.js](./wolf-sheep/tricky.js)

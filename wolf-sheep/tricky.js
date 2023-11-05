@@ -3,19 +3,20 @@ class TrickyStrategy extends DefaultStrategy {
 
   constructor(dt) {
     super()
-    this.final = {"x":-0.6772363455269725,"y":0.5739168632777377}
+    this.final1 = {"x":-0.6502053848303994,"y":0.6288089665383846}
+    this.final2 = {"x":0.7844011950442196,"y":-0.10195242127013827}
     this.dt = dt
   }
 
   stepSheepImpl(wolf, sheep1, sheep2) {
-    const dir1 = this.stepSheepNearWolf(wolf, sheep1, sheep2)
+    const dir1 = this.stepSheepNearWolf(wolf, sheep1, this.final2)
     var ns = new Agent(sheep1.x, sheep1.y, sheep1.speed)
     ns.moveInDir(dir1.x, dir1.y, this.dt)
     const d1 = wolf.distanceTo(ns) + 0.000000000001
 
-    // keep distance(sheep2, wolf) >= d1, maximize distance(final, sheep2)
+    // keep distance(sheep2, wolf) >= d1, maximize distance(final1, sheep2)
     ns = new Agent(sheep2.x, sheep2.y, sheep2.speed)
-    var dir2 = coord(sheep2.x - this.final.x, sheep2.y - this.final.y)
+    var dir2 = coord(sheep2.x - this.final1.x, sheep2.y - this.final1.y)
     ns.moveInDir(dir2.x, dir2.y, this.dt)
     if (d1 <= ns.distanceTo(wolf)) {
       return [dir1, dir2]

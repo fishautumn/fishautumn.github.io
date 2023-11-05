@@ -199,13 +199,15 @@ alt="greedy.png" /></p>
 <p>total time: 5.003527201219288.</p>
 <p>source code: <a href="./wolf-sheep/greedy.js">wolf-sheep.js</a></p>
 <h1 id="sheep-strategy-tricky">Sheep Strategy: Tricky</h1>
-<p>If we know location F where sheep A is caught, then sheep B should
-run away from F, while keeping <span
+<p>If we know final locations (sheep A at F, sheep B at G) when sheep A
+is caught, then sheep A should choose direction that maximizes <span
+class="math inline">||<em>W</em><em>A</em>|| + ||<em>A</em><em>G</em>||</span>,
+while sheep B should run away from F and keeping <span
 class="math inline">||<em>W</em><em>B</em>|| ≥ ||<em>W</em><em>A</em>||</span>.</p>
 <p>Result from page <a href="./wolf-sheep/racing.html">racing.html</a>
 tricky strategy: <img src="./wolf-sheep/tricky.png"
 alt="tricky.png" /></p>
-<p>total time: 5.024353154190957.</p>
+<p>total time: 5.036925208707695.</p>
 <p>source code: <a href="./wolf-sheep/tricky.js">wolf-sheep.js</a></p>
 </body>
 </html>
