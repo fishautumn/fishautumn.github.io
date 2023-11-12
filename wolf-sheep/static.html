@@ -1,0 +1,18 @@
+<html lang="en">
+<head>
+    <script src="draw.js" ></script>
+    <script src="agent.js" ></script>
+    <script src="static.js" ></script>
+    <script>
+        function on_load() {
+          const canvas = document.getElementById("canvas")
+          const draw = new Draw(canvas, 2, 2)
+          run_static(draw)
+        }
+        window.addEventListener("load", () => {
+          on_load()
+        });
+    </script>
+</head>
+<canvas id="canvas" width="400" height="400"></canvas>
+</html>
