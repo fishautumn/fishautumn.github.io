@@ -41,6 +41,6 @@ while sheep B should run away from F and keeping $||WB||\ge||WA||$.
 Result from page [racing.html](./wolf-sheep/racing.html) tricky strategy:
 ![tricky.png](./wolf-sheep/tricky.png)
 
-total time: 5.036925208707695.
+total time: 5.037744142633788.
 
 source code: [tricky.js](./wolf-sheep/tricky.js)

@@ -41,6 +41,9 @@ class Game {
     console.log("sheep1: " + JSON.stringify(this.sheep1.position()) + "\nsheep2: " + JSON.stringify(this.sheep2.position()) + "\ndistance: " + this.sheep1.distanceTo(this.sheep2))
     const t2 = this.sheep1.distanceTo(this.sheep2) / (this.wolf.speed - this.sheep1.speed);
     console.log("it takes " + t1 + " to catch sheep1, total time: " + (t1 + t2));
+    if (this.strategy.final1 != null) {
+      this.line(ctx, this.strategy.final1, this.strategy.final2, "yellow")
+    }
   }
 
   line(ctx, old, agent, color) {

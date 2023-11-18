@@ -1,0 +1,18 @@
+<html lang="en">
+<head>
+    <script src="draw.js" ></script>
+    <script src="agent.js" ></script>
+    <script>
+        function on_load() {
+          const canvas = document.getElementById("canvas")
+          const draw = new Draw(canvas, 2, 2)
+          draw.line({"x":-0.6824966234801522,"y":0.5629660456000858}, {"x":0.8119642206777624,"y":-0.04730746482959347}, "red")
+          draw.line({"x":-0.6467803614726987,"y":0.6345802337671108}, {"x":0.7832758424369813,"y":-0.10277986541692728}, "green")
+        }
+        window.addEventListener("load", () => {
+          on_load()
+        });
+    </script>
+</head>
+<canvas id="canvas" width="400" height="400"></canvas>
+</html>
