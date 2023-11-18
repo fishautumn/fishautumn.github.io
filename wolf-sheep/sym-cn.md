@@ -26,3 +26,10 @@ $
 \end{equation}
 $
 
+
+temp:
+greedy:
+sheep1: {"x":-0.6824966234801522,"y":0.5629660456000858}
+sheep2: {"x":0.8119642206777624,"y":-0.04730746482959347}
+distance: 1.6142636006096867
+wolf-sheep.js:43 it takes 1.7749999999999153 to catch sheep1, total time: 5.003527201219288
