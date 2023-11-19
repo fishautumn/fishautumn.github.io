@@ -1,31 +1,69 @@
-考虑 A, B 两羊与狼 W 等距情况下, 羊的策略.
+考虑 A, B 两羊与狼 W 等距情况, 即 $|WA|=|WB|$ 时, 羊的策略.
 
-目标: 最大化 $min(||WA||, ||WB||)+||AB||$.
+- $\angle AWB = 2\alpha$
+- B 羊同对称情况
+- A 羊选择方向与 $\angle AWB$ 平分线夹角为 $\beta' < \beta$
+- A 羊前进距离为 $0 < a \ll ||WB||$
+- A 两羊达到位置 A"
 
-如果两羊采取相同策略, 即选择关于 y 轴对称的方向, 则有 $min(||WA||, ||WB||)=||WA||=||WB||$.
-假定 WB 与 y 轴夹角为 $\alpha$, B 选择方向与 y 轴夹角为 $\beta$, A, B 两羊前进距离为 $a \ll ||WB||$,
-则有 $||A'B'||=||AB||+2 a sin\beta$, $||WB'||\approx||WB||+a cos(\beta - \alpha)$.
-目标等价 最大化 $2 a sin\beta + a cos(\beta - \alpha) \sim 2 sin\beta + cos(\beta - \alpha)$
 
-求导
-$
-\begin{equation}
-\frac {d(2 sin\beta + cos(\beta - \alpha))} {d\beta} \\
-=2 cos\beta - sin(\beta - \alpha)
-\end{equation}
-$
+目标: 最大化 $\min(|WA|, |WB|)+|AB|=|WA|+|AB|$.
 
-倒数为0时取极值
-$
-\begin{equation}
-2 cos\beta - sin(\beta - \alpha) = 0 \\
-=> 2 cos\beta = sin(\beta - \alpha) \\
-=> 2 cos\beta = sin\beta cost\alpha - cos\beta sin\alpha \\
-=> 2 = tan\beta cos\alpha - sin\alpha \\
-=> tan\beta = \frac{2+sin\alpha}{cos\alpha}
-\end{equation}
-$
+## 两羊选择方向关于 $\angle AWB$ 平分线对称情况下, 两羊应该选择的方向
 
+记:
+
+- $\angle AWB = 2\alpha$
+- A, B 两羊选择方向与 $\angle AWB$ 平分线夹角为 $\beta$
+- A, B 两羊前进距离为 $0 < a \ll ||WB||$
+- A, B 两羊达到位置 A', B'
+
+则有
+
+- $|A'B'| \approx |AB| + 2 a\sin\beta$
+- $|WA'| \approx |WA| + a\cos(\beta - \alpha)$
+
+目标等价 最大化 $2 a\sin\beta + a\cos(\beta - \alpha) \sim 2\sin\beta +\cos(\beta - \alpha)$
+
+对目标函数求导:
+$$
+\frac {d(2 \sin\beta + \cos(\beta - \alpha))} {d\beta}
+=2 \cos\beta - \sin(\beta - \alpha)
+$$
+
+导数为0时取极值
+$$
+\begin{align}
+& 2 \cos\beta - \sin(\beta - \alpha) = 0 \\
+\implies & 2 \cos\beta = \sin(\beta - \alpha) \\
+\implies & 2 \cos\beta = \sin\beta \cos\alpha - \cos\beta\sin\alpha \\
+\implies & 2 = \tan\beta \cos\alpha - \sin\alpha \\
+\implies & \tan\beta = \frac{2+\sin\alpha}{\cos\alpha}
+\end{align}
+$$
+
+
+## 两羊选择方向关于 $\angle AWB$ 平分线对称, 优于不对称
+
+考虑不对称情况:
+
+- $\angle AWB = 2\alpha$
+- B 羊同对称情况
+- A 羊选择方向与 $\angle AWB$ 平分线夹角为 $\beta' < \beta$
+- A 羊前进距离为 $0 < a \ll ||WB||$
+- A 两羊达到位置 A"
+
+则目标为 $|WB'|+|A''B'|$
+
+相比前面对称情况目标 $$|WB'|+|A'B'|$$
+
+其中 $A''B'$ 是以为底边的 $A'B'$ 等腰梯形对角线, 等腰梯形的高 $h < a \ll |A'B'|$ 远小于顶边和底边.
+
+A' 和 A" 在以 A 为圆心, a 为半径的圆上, 所以$AA'A'''$ 是等腰三角形, $\angle AA'A'''=\angle AA''A'|$.
+
+过 A 做线段 A'A" 的垂线, 即为中垂线, B' 更靠近 A" 一侧, 因此 $|A'B'| > |A''B'| \implies |WB'|+|A'B'| > |WB'|+|A''B'|$.
+
+因此对称策略, 优于非对称策略.
 
 temp:
 greedy:
@@ -70,7 +108,7 @@ wolf-sheep.js:43 it takes 1.8189999999999105 to catch sheep1, total time: 5.0360
 sheep1: {"x":-0.6459131471422915,"y":0.6362020246019914}
 sheep2: {"x":0.7817926466362477,"y":-0.10550243694239525}
 distance: 1.6088720713169389
-wolf-sheep.js:43 it takes 1.8199999999999104 to catch sheep1, total time: 5.037744142633788
+wolf-sheep.js:43 it takes 1.8199999999999104 to catch sheep1, total time: 5.037744142633788 ** best
 =>
 sheep1: {"x":-0.6452488128093686,"y":0.6369018508854347}
 sheep2: {"x":0.7813417017095368,"y":-0.10571449152444583}
@@ -96,3 +134,205 @@ sheep1: {"x":-0.6451893486914871,"y":0.6369655672457873}
 sheep2: {"x":0.7813947637248524,"y":-0.1055664909373464}
 distance: 1.6082587127786363
 wolf-sheep.js:43 it takes 1.8199999999999104 to catch sheep1, total time: 5.036517425557183
+
+dt=0.001
+greedy:
+sheep1: {"x":-0.6824884647228749,"y":0.5628632098591808}
+sheep2: {"x":0.8119022008251138,"y":-0.047788796617855914}
+distance: 1.614341765021085
+wolf-sheep.js:43 it takes 1.774899999999821 to catch sheep1, total time: 5.003583530041991
+=>
+sheep1: {"x":-0.6653050060674377,"y":0.6002377228562508}
+sheep2: {"x":0.7952653638911238,"y":-0.08279040971735874}
+distance: 1.6123874334315194
+wolf-sheep.js:43 it takes 1.7997999999998182 to catch sheep1, total time: 5.0245748668628565
+=>
+sheep1: {"x":-0.653647863125788,"y":0.6219723314845619}
+sheep2: {"x":0.7890555766244446,"y":-0.0931325221548679}
+distance: 1.6102074918363232
+wolf-sheep.js:43 it takes 1.811699999999817 to catch sheep1, total time: 5.0321149836724635
+=>
+sheep1: {"x":-0.649858438753003,"y":0.6286454381798664}
+sheep2: {"x":0.7840421207907714,"y":-0.10207687713881011}
+distance: 1.6093557458699543
+wolf-sheep.js:43 it takes 1.8152999999998165 to catch sheep1, total time: 5.034011491739725
+=>
+sheep1: {"x":-0.6465383427015188,"y":0.6343758887856322}
+sheep2: {"x":0.7829449423800369,"y":-0.1030248421520955}
+distance: 1.6084720390218321
+wolf-sheep.js:43 it takes 1.8183999999998162 to catch sheep1, total time: 5.03534407804348
+=>
+sheep1: {"x":-0.6460851495078137,"y":0.6350688392232864}
+sheep2: {"x":0.7813521357397595,"y":-0.10589800183019207}
+distance: 1.6082938359813892
+wolf-sheep.js:43 it takes 1.8186999999998161 to catch sheep1, total time: 5.035287671962594
+```javascript
+function avg(a) {
+const x = {s1:{x:(a[0].x+a[2].x)*0.5, y:(a[0].y+a[2].y)*0.5},s2:{x:(a[1].x+a[3].x)*0.5, y:(a[1].y+a[3].y)*0.5}}
+console.log("    this.final1 = " + JSON.stringify(x.s1) + "\n    this.final2 = " + JSON.stringify(x.s2) + "\n")
+}
+avg([{"x":-0.6465383427015188,"y":0.6343758887856322},{"x":0.7829449423800369,"y":-0.1030248421520955},{"x":-0.6460851495078137,"y":0.6350688392232864},{"x":0.7813521357397595,"y":-0.10589800183019207}])
+```
+sheep1: {"x":-0.6455449277029122,"y":0.6359901505616216}
+sheep2: {"x":0.7813772268224237,"y":-0.10564491646336627}
+distance: 1.608144709818238
+wolf-sheep.js:43 it takes 1.819199999999816 to catch sheep1, total time: 5.035489419636292
+=>
+sheep1: {"x":-0.6450757425701281,"y":0.6367653939100659}
+sheep2: {"x":0.7811033239965116,"y":-0.10597730484825879}
+distance: 1.6079967184269037
+wolf-sheep.js:43 it takes 1.819599999999816 to catch sheep1, total time: 5.035593436853624
+=>
+sheep1: {"x":-0.644973814933875,"y":0.6370129671239069}
+sheep2: {"x":0.7809407237544999,"y":-0.106323622700667}
+distance: 1.6080365535070738
+wolf-sheep.js:43 it takes 1.819799999999816 to catch sheep1, total time: 5.0358731070139635 ** best
+=>
+sheep1: {"x":-0.6448380792388085,"y":0.637225650375359}
+sheep2: {"x":0.780895354791603,"y":-0.10634100414308822}
+distance: 1.6079823365397723
+wolf-sheep.js:43 it takes 1.819899999999816 to catch sheep1, total time: 5.03586467307936
+```javascript
+function avg(a) {
+const x = {s1:{x:(a[0].x+a[2].x)*0.5, y:(a[0].y+a[2].y)*0.5},s2:{x:(a[1].x+a[3].x)*0.5, y:(a[1].y+a[3].y)*0.5}}
+console.log("\nthis.final1 = " + JSON.stringify(x.s1) + "\nthis.final2 = " + JSON.stringify(x.s2) + "\n")
+}
+avg([{"x":-0.644973814933875,"y":0.6370129671239069},{"x":0.7809407237544999,"y":-0.106323622700667},{"x":-0.6448380792388085,"y":0.637225650375359},{"x":0.780895354791603,"y":-0.10634100414308822}])
+```
+sheep1: {"x":-0.6448307460150646,"y":0.637233445038563}
+sheep2: {"x":0.7808627708221978,"y":-0.10639714267073162}
+distance: 1.607976509445543
+wolf-sheep.js:43 it takes 1.819899999999816 to catch sheep1, total time: 5.035853018890902
+```javascript
+function avg(a) {
+const x = {s1:{x:(a[0].x+a[2].x)*0.5, y:(a[0].y+a[2].y)*0.5},s2:{x:(a[1].x+a[3].x)*0.5, y:(a[1].y+a[3].y)*0.5}}
+console.log("\nthis.final1 = " + JSON.stringify(x.s1) + "\nthis.final2 = " + JSON.stringify(x.s2) + "\n")
+}
+avg([{"x":-0.644973814933875,"y":0.6370129671239069},{"x":0.7809407237544999,"y":-0.106323622700667},{"x":-0.6448307460150646,"y":0.637233445038563},{"x":0.7808627708221978,"y":-0.10639714267073162}])
+```
+sheep1: {"x":-0.6448156836200135,"y":0.6372493026532968}
+sheep2: {"x":0.7808596345233232,"y":-0.10638842396037408}
+distance: 1.6079636753379265
+wolf-sheep.js:43 it takes 1.819899999999816 to catch sheep1, total time: 5.035827350675669
+
+dt=0.0001
+greedy
+sheep1: {"x":-0.6824832171302017,"y":0.5628505534166014}
+sheep2: {"x":0.8118913613263028,"y":-0.04783504950696835}
+distance: 1.6143395821063111
+wolf-sheep.js:43 it takes 1.7748800000031602 to catch sheep1, total time: 5.003559164215782
+=>
+sheep1: {"x":-0.6653045105692406,"y":0.600240693719024}
+sheep2: {"x":0.7952670094316767,"y":-0.0828175494312644}
+distance: 1.6124012306412283
+wolf-sheep.js:43 it takes 1.7998100000033235 to catch sheep1, total time: 5.0246124612857805
+=>
+sheep1: {"x":-0.6536235255055967,"y":0.6219517131588009}
+sheep2: {"x":0.7890224060913894,"y":-0.09315687386351613}
+distance: 1.6101576243294908
+wolf-sheep.js:43 it takes 1.811640000003401 to catch sheep1, total time: 5.031955248662383
+=>
+sheep1: {"x":-0.6498344710780156,"y":0.6286316667032482}
+sheep2: {"x":0.784015243521771,"y":-0.10209616641776083}
+distance: 1.6093129497259429
+wolf-sheep.js:43 it takes 1.8152500000034246 to catch sheep1, total time: 5.03387589945531
+=>
+sheep1: {"x":-0.6465080722617037,"y":0.634354739912217}
+sheep2: {"x":0.7829077127979388,"y":-0.10304413075817044}
+distance: 1.6084111977487712
+wolf-sheep.js:43 it takes 1.8183300000034448 to catch sheep1, total time: 5.035152395500987
+=>
+sheep1: {"x":-0.6460887318800406,"y":0.6350679421478638}
+sheep2: {"x":0.781351089068286,"y":-0.10593308705869169}
+distance: 1.6083118378331251
+wolf-sheep.js:43 it takes 1.8187100000034473 to catch sheep1, total time: 5.035333675669698
+=>
+sheep1: {"x":-0.644999998315193,"y":0.6369103582149153}
+sheep2: {"x":0.7813950879446341,"y":-0.10542163559955905}
+distance: 1.607998672619711
+wolf-sheep.js:43 it takes 1.8197000000034538 to catch sheep1, total time: 5.035697345242876
+=>
+sheep1: {"x":-0.6451651886793434,"y":0.6366254206501986}
+sheep2: {"x":0.7808146108709069,"y":-0.10660714903004481}
+distance: 1.6080463430383063
+wolf-sheep.js:43 it takes 1.8195400000034527 to catch sheep1, total time: 5.035632686080065
+```javascript
+function avg(a) {
+const x = {s1:{x:(a[0].x+a[2].x)*0.5, y:(a[0].y+a[2].y)*0.5},s2:{x:(a[1].x+a[3].x)*0.5, y:(a[1].y+a[3].y)*0.5}}
+console.log("\nthis.final1 = " + JSON.stringify(x.s1) + "\nthis.final2 = " + JSON.stringify(x.s2) + "\n")
+}
+avg([{"x":-0.644999998315193,"y":0.6369103582149153},{"x":0.7813950879446341,"y":-0.10542163559955905},{"x":-0.6451651886793434,"y":0.6366254206501986},{"x":0.7808146108709069,"y":-0.10660714903004481}])
+```
+sheep1: {"x":-0.6449440294904464,"y":0.6369981261005404}
+sheep2: {"x":0.7809068822756746,"y":-0.10634109679923325}
+distance: 1.6079813502915752
+wolf-sheep.js:43 it takes 1.819740000003454 to catch sheep1, total time: 5.035702700586604
+=>
+sheep1: {"x":-0.6448205793326388,"y":0.637212040028565}
+sheep2: {"x":0.7808707568658457,"y":-0.10636788299957853}
+distance: 1.6079511460370806
+wolf-sheep.js:43 it takes 1.8198600000034548 to catch sheep1, total time: 5.0357622920776155
+=>
+sheep1: {"x":-0.6448075111760634,"y":0.6372328736110559}
+sheep2: {"x":0.7808107178028258,"y":-0.10647766823370856}
+distance: 1.6079467356998918
+wolf-sheep.js:43 it takes 1.819870000003455 to catch sheep1, total time: 5.035763471403238
+=>
+sheep1: {"x":-0.6447668360929697,"y":0.637303626573025}
+sheep2: {"x":0.7808151092939467,"y":-0.10645522953278158}
+distance: 1.6079369138896475
+wolf-sheep.js:43 it takes 1.8199100000034552 to catch sheep1, total time: 5.03578382778275
+=>
+sheep1: {"x":-0.6447731482638904,"y":0.6372900326753552}
+sheep2: {"x":0.7807913884282651,"y":-0.10650079028621871}
+distance: 1.6079362663352599
+wolf-sheep.js:43 it takes 1.819900000003455 to catch sheep1, total time: 5.035772532673975
+```javascript
+function avg(a) {
+const x = {s1:{x:(a[0].x+a[2].x)*0.5, y:(a[0].y+a[2].y)*0.5},s2:{x:(a[1].x+a[3].x)*0.5, y:(a[1].y+a[3].y)*0.5}}
+console.log("\nthis.final1 = " + JSON.stringify(x.s1) + "\nthis.final2 = " + JSON.stringify(x.s2) + "\n")
+}
+avg([{"x":-0.6447668360929697,"y":0.637303626573025},{"x":0.7808151092939467,"y":-0.10645522953278158},{"x":-0.6447731482638904,"y":0.6372900326753552},{"x":0.7807913884282651,"y":-0.10650079028621871}])
+```
+sheep1: {"x":-0.6447655507634089,"y":0.6373050104325143}
+sheep2: {"x":0.7807962452019754,"y":-0.10649046931628393}
+distance: 1.6079359905825845
+wolf-sheep.js:43 it takes 1.8199100000034552 to catch sheep1, total time: 5.035781981168624
+```javascript
+function avg(a) {
+const x = {s1:{x:(a[0].x+a[2].x)*0.5, y:(a[0].y+a[2].y)*0.5},s2:{x:(a[1].x+a[3].x)*0.5, y:(a[1].y+a[3].y)*0.5}}
+console.log("\nthis.final1 = " + JSON.stringify(x.s1) + "\nthis.final2 = " + JSON.stringify(x.s2) + "\n")
+}
+avg([{"x":-0.6447668360929697,"y":0.637303626573025},{"x":0.7808151092939467,"y":-0.10645522953278158},{"x":-0.6447655507634089,"y":0.6373050104325143},{"x":0.7807962452019754,"y":-0.10649046931628393}])
+```
+sheep1: {"x":-0.6447682362782161,"y":0.6373021849670046}
+sheep2: {"x":0.7807944484931222,"y":-0.10649656461437401}
+distance: 1.6079382911328683
+wolf-sheep.js:43 it takes 1.8199100000034552 to catch sheep1, total time: 5.035786582269192 ** best
+=>
+sheep1: {"x":-0.6447558846106624,"y":0.6373151801305627}
+sheep2: {"x":0.7807936456232243,"y":-0.10648591015992735}
+distance: 1.607927711393574
+wolf-sheep.js:43 it takes 1.8199100000034552 to catch sheep1, total time: 5.035765422790603
+```javascript
+function avg(a) {
+const x = {s1:{x:(a[0].x+a[2].x)*0.5, y:(a[0].y+a[2].y)*0.5},s2:{x:(a[1].x+a[3].x)*0.5, y:(a[1].y+a[3].y)*0.5}}
+console.log("\nthis.final1 = " + JSON.stringify(x.s1) + "\nthis.final2 = " + JSON.stringify(x.s2) + "\n")
+}
+avg([{"x":-0.6447668360929697,"y":0.637303626573025},{"x":0.7808151092939467,"y":-0.10645522953278158},{"x":-0.6447682362782161,"y":0.6373021849670046},{"x":0.7807944484931222,"y":-0.10649656461437401}])
+```
+sheep1: {"x":-0.6447667314763826,"y":0.6373037658830433}
+sheep2: {"x":0.7807947335436767,"y":-0.10649450676055792}
+distance: 1.6079369891067694
+wolf-sheep.js:43 it takes 1.8199100000034552 to catch sheep1, total time: 5.035783978216994 **
+```javascript
+function avg(a) {
+const x = {s1:{x:(a[0].x+a[2].x)*0.5, y:(a[0].y+a[2].y)*0.5},s2:{x:(a[1].x+a[3].x)*0.5, y:(a[1].y+a[3].y)*0.5}}
+console.log("\nthis.final1 = " + JSON.stringify(x.s1) + "\nthis.final2 = " + JSON.stringify(x.s2) + "\n")
+}
+avg([{"x":-0.6447667314763826,"y":0.6373037658830433},{"x":0.7807947335436767,"y":-0.10649450676055792},{"x":-0.6447682362782161,"y":0.6373021849670046},{"x":0.7807944484931222,"y":-0.10649656461437401}])
+```
+sheep1: {"x":-0.644756368268924,"y":0.6373146727842153}
+sheep2: {"x":0.780793442193377,"y":-0.10648679403644751}
+distance: 1.6079281340139777
+wolf-sheep.js:43 it takes 1.8199100000034552 to catch sheep1, total time: 5.035766268031411

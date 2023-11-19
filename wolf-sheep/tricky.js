@@ -3,8 +3,8 @@ class TrickyStrategy extends DefaultStrategy {
 
   constructor(dt) {
     super()
-    this.final1 = {x:-0.6465128189358089, y:0.6348648635672964}
-    this.final2 = {x:0.782406552358925, y:-0.10422223603672934}
+    this.final1 = {"x":-0.6447674838772994,"y":0.6373029754250239}
+    this.final2 = {"x":0.7807945910183994,"y":-0.10649553568746598}
     this.dt = dt
   }
 

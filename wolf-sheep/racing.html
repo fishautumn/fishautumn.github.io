@@ -1,4 +1,4 @@
-<html>
+<html lang="en">
 <head>
     <script src="agent.js"></script>
     <script src="wolf-sheep.js"></script>
@@ -8,7 +8,7 @@
         function render() {
           const canvas = document.getElementById("canvas")
           const strategyName = document.getElementById("selStrategy").value
-          const dt = 0.001
+          const dt = 0.00001
           const strategy = eval("new " + strategyName + "(" + dt + ")")
           const g = new Game(canvas, strategy, dt)
           g.run()
@@ -21,8 +21,8 @@
 </head>
 <body>
 <select id="selStrategy">
-    <option value="DefaultStrategy">greedy</option>
     <option value="TrickyStrategy">tricky</option>
+    <option value="DefaultStrategy">greedy</option>
 </select>
 <br>
 <canvas id="canvas" width="400" height="400"></canvas>
